@@ -3,7 +3,7 @@
 
 include $(ESP_ROOT)/utils/make/leon3_sw.mk
 
-soft: leon3-soft $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin
+soft: leon3-soft $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx8
 
 $(SOFT_BUILD)/systest.bin: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) $(CROSS_COMPILE_ELF)objcopy -O binary --change-addresses -0x40000000 $< $@
@@ -22,7 +22,8 @@ soft-distclean: leon3-soft-distclean
 	$(SOFT_BUILD)/prom.bin		\
 	$(SOFT_BUILD)/systest.bin	\
 	$(SOFT_BUILD)/prom.srec 	\
-	$(SOFT_BUILD)/ram.srec
+	$(SOFT_BUILD)/ram.srec		\
+	$(SOFT_BUILD)/ram.vhx8
 
 .PHONY: leon3-soft-clean leon3-soft-distclean
 
