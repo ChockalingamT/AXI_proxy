@@ -1040,7 +1040,8 @@ package tile is
       is_tile_io        : boolean              := false;
       SIMULATION        : boolean              := false;
       ROUTER_PORTS      : ports_vec            := "11111";
-      HAS_SYNC          : integer range 0 to 1 := 1);
+      HAS_SYNC          : integer range 0 to 1 := 1;
+      is_asic           : boolean              := false);
     port (
       rst                : in  std_ulogic;
       noc_clk_lock       : in  std_ulogic;

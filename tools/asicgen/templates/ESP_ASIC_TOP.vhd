@@ -508,7 +508,11 @@ begin
       generic map (
         this_has_token_pm => 0,
         is_tile_io        => is_io_tile(i),
-        SIMULATION        => SIMULATION)
+        has_ddr           => false,
+        SIMULATION        => SIMULATION,
+        ROUTER_PORTS      => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
+        HAS_SYNC          => 1,
+        is_asic           => true)
       port map (
         rst                     => reset_int,
         noc_clk_lock            => noc_clk_lock,
