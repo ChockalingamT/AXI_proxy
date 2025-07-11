@@ -464,7 +464,7 @@ def print_global_constants(fp, soc):
         fp.write("  constant MAX_MCAST_DESTS : integer := 2;\n")
     fp.write("  constant QUEUE_SIZE : integer := " +
              str(soc.noc.queue_size.get()) + ";\n")
-    fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " +
+    fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + \
              str(int(math.log2(soc.cache_line_size.get() / soc.ARCH_BITS))) + ";\n")
     fp.write("  constant GLOB_DMA_WORD_OFFSET_BITS : integer := " +
              str(int(math.log2(soc.cache_line_size.get() / 32))) + ";\n")
@@ -519,8 +519,11 @@ def print_constants(fp, soc, esp_config):
 
     #
     fp.write("  ------ DMA memory allocation (contiguous buffer or scatter/gather)\n")
-    fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := " +
-             str(soc.transfers.get()) + ";\n\n")
+
+    if soc.transfers.get() == "Scatter/Gather":
+        fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := 1;\n\n")
+    else:
+        fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := 0;\n\n")
 
     #
     fp.write("  ------ Cache hierarchy\n")
