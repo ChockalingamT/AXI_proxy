@@ -417,7 +417,7 @@ $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log:
 SOCKETGEN_DEPS  = $(ESP_ROOT)/tech/$(TECHLIB)/acc/installed.log
 SOCKETGEN_DEPS += $(ESP_ROOT)/tools/socketgen/socketgen.py
 SOCKETGEN_DEPS += $(wildcard $(ESP_ROOT)/tools/socketgen/templates/*.vhd)
-SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd
+SOCKETGEN_DEPS += $(ESP_CFG_BUILD)/socmap.vhd $(ESP_CFG_BUILD)/esp_global.vhd $(ESP_CFG_BUILD)/esp_global_sv.sv
 
 ### ESP Wrappers ###
 socketgen: $(SOCKETGEN_DEPS)

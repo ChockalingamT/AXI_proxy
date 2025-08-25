@@ -56,8 +56,41 @@ entity tile_mem is
     dco_clk_div2_90    : out std_ulogic;
     tile_rstn_out          : out std_ulogic;
     phy_rstn           : out std_ulogic;
-    ddr_ahbsi          : out ahb_slv_in_type;
-    ddr_ahbso          : in  ahb_slv_out_type;
+    s_axi_awid         : out   std_logic_vector(7 downto 0);
+    s_axi_awaddr       : out   std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+    s_axi_awlen        : out   std_logic_vector(7 downto 0);
+    s_axi_awsize       : out   std_logic_vector(2 downto 0);
+    s_axi_awburst      : out   std_logic_vector(1 downto 0);
+    s_axi_awlock       : out   std_logic;
+    s_axi_awcache      : out   std_logic_vector(3 downto 0);
+    s_axi_awprot       : out   std_logic_vector(2 downto 0);
+    s_axi_awvalid      : out   std_logic;
+    s_axi_awready      : in    std_logic;
+    s_axi_wdata        : out   std_logic_vector(AXIDW-1 downto 0);
+    s_axi_wstrb        : out   std_logic_vector(AW-1 downto 0);
+    s_axi_wlast        : out   std_logic;
+    s_axi_wvalid       : out   std_logic;
+    s_axi_wready       : in    std_logic;
+    s_axi_bid          : in    std_logic_vector(7 downto 0);
+    s_axi_bresp        : in    std_logic_vector(1 downto 0);
+    s_axi_bvalid       : in    std_logic;
+    s_axi_bready       : out   std_logic;
+    s_axi_arid         : out   std_logic_vector(7 downto 0);
+    s_axi_araddr       : out   std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+    s_axi_arlen        : out   std_logic_vector(7 downto 0);
+    s_axi_arsize       : out   std_logic_vector(2 downto 0);
+    s_axi_arburst      : out   std_logic_vector(1 downto 0);
+    s_axi_arlock       : out   std_logic;
+    s_axi_arcache      : out   std_logic_vector(3 downto 0);
+    s_axi_arprot       : out   std_logic_vector(2 downto 0);
+    s_axi_arvalid      : out   std_logic;
+    s_axi_arready      : in    std_logic;
+    s_axi_rid          : in    std_logic_vector(7 downto 0);
+    s_axi_rdata        : in    std_logic_vector(AXIDW-1 downto 0);
+    s_axi_rresp        : in    std_logic_vector(1 downto 0);
+    s_axi_rlast        : in    std_logic;
+    s_axi_rvalid       : in    std_logic;
+    s_axi_rready       : out   std_logic;
     -- FPGA proxy memory link (this_has_ddr -> 0)
     fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
@@ -236,6 +269,203 @@ architecture rtl of tile_mem is
   signal this_local_y      : local_yx;
   signal this_local_x      : local_yx;
 
+  -- AXI Crossbar Signals
+  signal mst0_aw_id       : std_logic_vector(1 downto 0);
+  signal mst0_aw_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal mst0_aw_len      : std_logic_vector(7 downto 0);
+  signal mst0_aw_size     : std_logic_vector(2 downto 0);
+  signal mst0_aw_burst    : std_logic_vector(1 downto 0);
+  signal mst0_aw_lock     : std_logic;
+  signal mst0_aw_cache    : std_logic_vector(3 downto 0);
+  signal mst0_aw_prot     : std_logic_vector(2 downto 0);
+  signal mst0_aw_qos      : std_logic_vector(3 downto 0);
+  signal mst0_aw_atop     : std_logic_vector(5 downto 0);
+  signal mst0_aw_region   : std_logic_vector(3 downto 0);
+  signal mst0_aw_user     : std_logic_vector(3 downto 0);
+  signal mst0_aw_valid    : std_logic;
+  signal mst0_aw_ready    : std_logic;
+  signal mst0_w_data      : std_logic_vector(AXIDW-1 downto 0);
+  signal mst0_w_strb      : std_logic_vector(AW-1 downto 0);
+  signal mst0_w_last      : std_logic;
+  signal mst0_w_user      : std_logic_vector(3 downto 0);
+  signal mst0_w_valid     : std_logic;
+  signal mst0_w_ready     : std_logic;
+  signal mst0_b_id        : std_logic_vector(1 downto 0);
+  signal mst0_b_resp      : std_logic_vector(1 downto 0);
+  signal mst0_b_user      : std_logic_vector(3 downto 0);
+  signal mst0_b_valid     : std_logic;
+  signal mst0_b_ready     : std_logic;
+  signal mst0_ar_id       : std_logic_vector(1 downto 0);
+  signal mst0_ar_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal mst0_ar_len      : std_logic_vector(7 downto 0);
+  signal mst0_ar_size     : std_logic_vector(2 downto 0);
+  signal mst0_ar_burst    : std_logic_vector(1 downto 0);
+  signal mst0_ar_lock     : std_logic;
+  signal mst0_ar_cache    : std_logic_vector(3 downto 0);
+  signal mst0_ar_prot     : std_logic_vector(2 downto 0);
+  signal mst0_ar_qos      : std_logic_vector(3 downto 0);
+  signal mst0_ar_region   : std_logic_vector(3 downto 0);
+  signal mst0_ar_user     : std_logic_vector(3 downto 0);
+  signal mst0_ar_valid    : std_logic;
+  signal mst0_ar_ready    : std_logic;
+  signal mst0_r_id        : std_logic_vector(1 downto 0);
+  signal mst0_r_data      : std_logic_vector(AXIDW-1 downto 0);
+  signal mst0_r_resp      : std_logic_vector(1 downto 0);
+  signal mst0_r_last      : std_logic;
+  signal mst0_r_user      : std_logic_vector(3 downto 0);
+  signal mst0_r_valid     : std_logic;
+  signal mst0_r_ready     : std_logic;
+
+  signal mst1_aw_id       : std_logic_vector(1 downto 0);
+  signal mst1_aw_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal mst1_aw_len      : std_logic_vector(7 downto 0);
+  signal mst1_aw_size     : std_logic_vector(2 downto 0);
+  signal mst1_aw_burst    : std_logic_vector(1 downto 0);
+  signal mst1_aw_lock     : std_logic;
+  signal mst1_aw_cache    : std_logic_vector(3 downto 0);
+  signal mst1_aw_prot     : std_logic_vector(2 downto 0);
+  signal mst1_aw_qos      : std_logic_vector(3 downto 0);
+  signal mst1_aw_atop     : std_logic_vector(5 downto 0);
+  signal mst1_aw_region   : std_logic_vector(3 downto 0);
+  signal mst1_aw_user     : std_logic_vector(3 downto 0);
+  signal mst1_aw_valid    : std_logic;
+  signal mst1_aw_ready    : std_logic;
+  signal mst1_w_data      : std_logic_vector(AXIDW-1 downto 0);
+  signal mst1_w_strb      : std_logic_vector(AW-1 downto 0);
+  signal mst1_w_last      : std_logic;
+  signal mst1_w_user      : std_logic_vector(3 downto 0);
+  signal mst1_w_valid     : std_logic;
+  signal mst1_w_ready     : std_logic;
+  signal mst1_b_id        : std_logic_vector(1 downto 0);
+  signal mst1_b_resp      : std_logic_vector(1 downto 0);
+  signal mst1_b_user      : std_logic_vector(3 downto 0);
+  signal mst1_b_valid     : std_logic;
+  signal mst1_b_ready     : std_logic;
+  signal mst1_ar_id       : std_logic_vector(1 downto 0);
+  signal mst1_ar_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal mst1_ar_len      : std_logic_vector(7 downto 0);
+  signal mst1_ar_size     : std_logic_vector(2 downto 0);
+  signal mst1_ar_burst    : std_logic_vector(1 downto 0);
+  signal mst1_ar_lock     : std_logic;
+  signal mst1_ar_cache    : std_logic_vector(3 downto 0);
+  signal mst1_ar_prot     : std_logic_vector(2 downto 0);
+  signal mst1_ar_qos      : std_logic_vector(3 downto 0);
+  signal mst1_ar_region   : std_logic_vector(3 downto 0);
+  signal mst1_ar_user     : std_logic_vector(3 downto 0);
+  signal mst1_ar_valid    : std_logic;
+  signal mst1_ar_ready    : std_logic;
+  signal mst1_r_id        : std_logic_vector(1 downto 0);
+  signal mst1_r_data      : std_logic_vector(AXIDW-1 downto 0);
+  signal mst1_r_resp      : std_logic_vector(1 downto 0);
+  signal mst1_r_last      : std_logic;
+  signal mst1_r_user      : std_logic_vector(3 downto 0);
+  signal mst1_r_valid     : std_logic;
+  signal mst1_r_ready     : std_logic;
+
+  signal mst2_aw_id       : std_logic_vector(1 downto 0);
+  signal mst2_aw_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal mst2_aw_len      : std_logic_vector(7 downto 0);
+  signal mst2_aw_size     : std_logic_vector(2 downto 0);
+  signal mst2_aw_burst    : std_logic_vector(1 downto 0);
+  signal mst2_aw_lock     : std_logic;
+  signal mst2_aw_cache    : std_logic_vector(3 downto 0);
+  signal mst2_aw_prot     : std_logic_vector(2 downto 0);
+  signal mst2_aw_qos      : std_logic_vector(3 downto 0);
+  signal mst2_aw_atop     : std_logic_vector(5 downto 0);
+  signal mst2_aw_region   : std_logic_vector(3 downto 0);
+  signal mst2_aw_user     : std_logic_vector(3 downto 0);
+  signal mst2_aw_valid    : std_logic;
+  signal mst2_aw_ready    : std_logic;
+  signal mst2_w_data      : std_logic_vector(AXIDW-1 downto 0);
+  signal mst2_w_strb      : std_logic_vector(AW-1 downto 0);
+  signal mst2_w_last      : std_logic;
+  signal mst2_w_user      : std_logic_vector(3 downto 0);
+  signal mst2_w_valid     : std_logic;
+  signal mst2_w_ready     : std_logic;
+  signal mst2_b_id        : std_logic_vector(1 downto 0);
+  signal mst2_b_resp      : std_logic_vector(1 downto 0);
+  signal mst2_b_user      : std_logic_vector(3 downto 0);
+  signal mst2_b_valid     : std_logic;
+  signal mst2_b_ready     : std_logic;
+  signal mst2_ar_id       : std_logic_vector(1 downto 0);
+  signal mst2_ar_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal mst2_ar_len      : std_logic_vector(7 downto 0);
+  signal mst2_ar_size     : std_logic_vector(2 downto 0);
+  signal mst2_ar_burst    : std_logic_vector(1 downto 0);
+  signal mst2_ar_lock     : std_logic;
+  signal mst2_ar_cache    : std_logic_vector(3 downto 0);
+  signal mst2_ar_prot     : std_logic_vector(2 downto 0);
+  signal mst2_ar_qos      : std_logic_vector(3 downto 0);
+  signal mst2_ar_region   : std_logic_vector(3 downto 0);
+  signal mst2_ar_user     : std_logic_vector(3 downto 0);
+  signal mst2_ar_valid    : std_logic;
+  signal mst2_ar_ready    : std_logic;
+  signal mst2_r_id        : std_logic_vector(1 downto 0);
+  signal mst2_r_data      : std_logic_vector(AXIDW-1 downto 0);
+  signal mst2_r_resp      : std_logic_vector(1 downto 0);
+  signal mst2_r_last      : std_logic;
+  signal mst2_r_user      : std_logic_vector(3 downto 0);
+  signal mst2_r_valid     : std_logic;
+  signal mst2_r_ready     : std_logic;
+
+  signal rom_aw_id        : std_logic_vector(3 downto 0);
+  signal rom_aw_addr      : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal rom_aw_len       : std_logic_vector(7 downto 0);
+  signal rom_aw_size      : std_logic_vector(2 downto 0);
+  signal rom_aw_burst     : std_logic_vector(1 downto 0);
+  signal rom_aw_lock      : std_logic;
+  signal rom_aw_cache     : std_logic_vector(3 downto 0);
+  signal rom_aw_prot      : std_logic_vector(2 downto 0);
+  signal rom_aw_qos       : std_logic_vector(3 downto 0);
+  signal rom_aw_atop      : std_logic_vector(5 downto 0);
+  signal rom_aw_region    : std_logic_vector(3 downto 0);
+  signal rom_aw_user      : std_logic_vector(3 downto 0);
+  signal rom_aw_valid     : std_logic;
+  signal rom_aw_ready     : std_logic;
+  signal rom_w_data       : std_logic_vector(AXIDW-1 downto 0);
+  signal rom_w_strb       : std_logic_vector(AW-1 downto 0);
+  signal rom_w_last       : std_logic;
+  signal rom_w_user       : std_logic_vector(3 downto 0);
+  signal rom_w_valid      : std_logic;
+  signal rom_w_ready      : std_logic;
+  signal rom_b_id         : std_logic_vector(3 downto 0);
+  signal rom_b_resp       : std_logic_vector(1 downto 0);
+  signal rom_b_user       : std_logic_vector(3 downto 0);
+  signal rom_b_valid      : std_logic;
+  signal rom_b_ready      : std_logic;
+  signal rom_ar_id        : std_logic_vector(3 downto 0);
+  signal rom_ar_addr      : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+  signal rom_ar_len       : std_logic_vector(7 downto 0);
+  signal rom_ar_size      : std_logic_vector(2 downto 0);
+  signal rom_ar_burst     : std_logic_vector(1 downto 0);
+  signal rom_ar_lock      : std_logic;
+  signal rom_ar_cache     : std_logic_vector(3 downto 0);
+  signal rom_ar_prot      : std_logic_vector(2 downto 0);
+  signal rom_ar_qos       : std_logic_vector(3 downto 0);
+  signal rom_ar_region    : std_logic_vector(3 downto 0);
+  signal rom_ar_user      : std_logic_vector(3 downto 0);
+  signal rom_ar_valid     : std_logic;
+  signal rom_ar_ready     : std_logic;
+  signal rom_r_id         : std_logic_vector(3 downto 0);
+  signal rom_r_data       : std_logic_vector(AXIDW-1 downto 0);
+  signal rom_r_resp       : std_logic_vector(1 downto 0);
+  signal rom_r_last       : std_logic;
+  signal rom_r_user       : std_logic_vector(3 downto 0);
+  signal rom_r_valid      : std_logic;
+  signal rom_r_ready      : std_logic;
+
+
+  signal dram_aw_qos      : std_logic_vector(3 downto 0);
+  signal dram_aw_atop     : std_logic_vector(5 downto 0);
+  signal dram_aw_region   : std_logic_vector(3 downto 0);
+  signal dram_aw_user     : std_logic_vector(3 downto 0);
+  signal dram_w_user      : std_logic_vector(3 downto 0);
+  signal dram_b_user      : std_logic_vector(3 downto 0);
+  signal dram_ar_qos      : std_logic_vector(3 downto 0);
+  signal dram_ar_region   : std_logic_vector(3 downto 0);
+  signal dram_ar_user     : std_logic_vector(3 downto 0);
+  signal dram_r_user      : std_logic_vector(3 downto 0);
+
   constant this_local_apb_en : std_logic_vector(0 to NAPBSLV - 1) := (
     0 => '1',                           -- CSRs
     1 => to_std_logic(CFG_LLC_ENABLE),  -- last-level cache
@@ -354,20 +584,266 @@ begin
   -- Bus
   -----------------------------------------------------------------------------
 
-  ahb_bus_gen: if this_has_ddr /= 0 generate
+  axi_crossbar_gen: if this_has_ddr /= 0 generate
   -- instantiate the bus if using on-chip DDR controller
-  ahb2 : ahbctrl                        -- AHB arbiter/multiplexer
-    generic map (defmast => CFG_DEFMST, split => CFG_SPLIT,
-                 rrobin  => CFG_RROBIN, ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
-                 nahbm   => maxahbm, nahbs => maxahbs,
-                 cfgmask => 0)
-    port map (rst, tile_clk, ahbmi, ahbmo, ahbsi, ahbso);
-  end generate ahb_bus_gen;
+  axi2 : crossbar_wrap                       -- AXICrossbar
+    generic map (
+      NMST 		=> 3,
+      NSLV 		=> 2,
+      AXI_ID_WIDTH 	=>  2,
+      AXI_ID_WIDTH_SLV 	=>  4,
+      AXI_ADDR_WIDTH 	=> GLOB_PHYS_ADDR_BITS,
+      AXI_DATA_WIDTH 	=> AXIDW,
+      AXI_USER_WIDTH 	=>  4,
+      AXI_STRB_WIDTH 	=> AW,
+      ROMBase 		=> X"0000_0000",
+      ROMLength 	=> X"0000_1000",
+      DRAMBase 		=> DRAM_BASE,
+      DRAMLength 	=> X"4000_0000"
+    )
+    port map (
+      clk 		=> tile_clk,
+      rstn 		=> rst,
+      mst0_aw_id 	=> mst0_aw_id,
+      mst0_aw_addr 	=> mst0_aw_addr,
+      mst0_aw_len 	=> mst0_aw_len,
+      mst0_aw_size 	=> mst0_aw_size,
+      mst0_aw_burst 	=> mst0_aw_burst,
+      mst0_aw_lock 	=> mst0_aw_lock,
+      mst0_aw_cache 	=> (others => '0'),
+      mst0_aw_prot 	=> mst0_aw_prot,
+      mst0_aw_qos 	=> (others => '0'),
+      mst0_aw_atop 	=> (others => '0'),
+      mst0_aw_region 	=> (others => '0'),
+      mst0_aw_user 	=> (others => '0'),
+      mst0_aw_valid 	=> mst0_aw_valid,
+      mst0_aw_ready 	=> mst0_aw_ready,
+      mst0_w_data 	=> mst0_w_data,
+      mst0_w_strb 	=> mst0_w_strb,
+      mst0_w_last 	=> mst0_w_last,
+      mst0_w_user 	=> (others => '0'),
+      mst0_w_valid 	=> mst0_w_valid,
+      mst0_w_ready 	=> mst0_w_ready,
+      mst0_b_id 	=> mst0_b_id,
+      mst0_b_resp 	=> mst0_b_resp,
+      mst0_b_user 	=> mst0_b_user,
+      mst0_b_valid 	=> mst0_b_valid,
+      mst0_b_ready 	=> mst0_b_ready,
+      mst0_ar_id 	=> mst0_ar_id,
+      mst0_ar_addr 	=> mst0_ar_addr,
+      mst0_ar_len 	=> mst0_ar_len,
+      mst0_ar_size 	=> mst0_ar_size,
+      mst0_ar_burst 	=> mst0_ar_burst,
+      mst0_ar_lock 	=> mst0_ar_lock,
+      mst0_ar_cache 	=> (others => '0'),
+      mst0_ar_prot 	=> mst0_ar_prot,
+      mst0_ar_qos 	=> (others => '0'),
+      mst0_ar_region 	=> (others => '0'),
+      mst0_ar_user 	=> (others => '0'),
+      mst0_ar_valid 	=> mst0_ar_valid,
+      mst0_ar_ready 	=> mst0_ar_ready,
+      mst0_r_id 	=> mst0_r_id,
+      mst0_r_data 	=> mst0_r_data,
+      mst0_r_resp 	=> mst0_r_resp,
+      mst0_r_last 	=> mst0_r_last,
+      mst0_r_user 	=> mst0_r_user,
+      mst0_r_valid	=> mst0_r_valid,
+      mst0_r_ready 	=> mst0_r_ready,
 
-  no_ahb_bus_gen: if this_has_ddr = 0 generate
-    ahbsi <= ahbs_in_none;
+      mst1_aw_id 	=> mst1_aw_id,
+      mst1_aw_addr 	=> mst1_aw_addr,
+      mst1_aw_len 	=> mst1_aw_len,
+      mst1_aw_size 	=> mst1_aw_size,
+      mst1_aw_burst 	=> mst1_aw_burst,
+      mst1_aw_lock 	=> mst1_aw_lock,
+      mst1_aw_cache 	=> (others => '0'),
+      mst1_aw_prot 	=> mst1_aw_prot,
+      mst1_aw_qos 	=> (others => '0'),
+      mst1_aw_atop 	=> (others => '0'),
+      mst1_aw_region 	=> (others => '0'),
+      mst1_aw_user 	=> (others => '0'),
+      mst1_aw_valid	=> mst1_aw_valid,
+      mst1_aw_ready 	=> mst1_aw_ready,
+      mst1_w_data 	=> mst1_w_data,
+      mst1_w_strb 	=> mst1_w_strb,
+      mst1_w_last 	=> mst1_w_last,
+      mst1_w_user 	=> (others => '0'),
+      mst1_w_valid 	=> mst1_w_valid,
+      mst1_w_ready 	=> mst1_w_ready,
+      mst1_b_id 	=> mst1_b_id,
+      mst1_b_resp 	=> mst1_b_resp,
+      mst1_b_user 	=> mst1_b_user,
+      mst1_b_valid 	=> mst1_b_valid,
+      mst1_b_ready 	=> mst1_b_ready,
+      mst1_ar_id	=> mst1_ar_id,
+      mst1_ar_addr 	=> mst1_ar_addr,
+      mst1_ar_len 	=> mst1_ar_len,
+      mst1_ar_size 	=> mst1_ar_size,
+      mst1_ar_burst 	=> mst1_ar_burst,
+      mst1_ar_lock 	=> mst1_ar_lock,
+      mst1_ar_cache 	=> (others => '0'),
+      mst1_ar_prot 	=> mst1_ar_prot,
+      mst1_ar_qos 	=> (others => '0'),
+      mst1_ar_region 	=> (others => '0'),
+      mst1_ar_user 	=> (others => '0'),
+      mst1_ar_valid 	=> mst1_ar_valid,
+      mst1_ar_ready 	=> mst1_ar_ready,
+      mst1_r_id 	=> mst1_r_id,
+      mst1_r_data 	=> mst1_r_data,
+      mst1_r_resp 	=> mst1_r_resp,
+      mst1_r_last 	=> mst1_r_last,
+      mst1_r_user 	=> mst1_r_user,
+      mst1_r_valid 	=> mst1_r_valid,
+      mst1_r_ready 	=> mst1_r_ready,
+
+      mst2_aw_id 	=> mst2_aw_id,
+      mst2_aw_addr 	=> mst2_aw_addr,
+      mst2_aw_len 	=> mst2_aw_len,
+      mst2_aw_size 	=> mst2_aw_size,
+      mst2_aw_burst 	=> mst2_aw_burst,
+      mst2_aw_lock 	=> mst2_aw_lock,
+      mst2_aw_cache 	=> (others => '0'),
+      mst2_aw_prot 	=> mst2_aw_prot,
+      mst2_aw_qos 	=> (others => '0'),
+      mst2_aw_atop 	=> (others => '0'),
+      mst2_aw_region 	=> (others => '0'),
+      mst2_aw_user 	=> (others => '0'),
+      mst2_aw_valid	=> mst2_aw_valid,
+      mst2_aw_ready 	=> mst2_aw_ready,
+      mst2_w_data 	=> mst2_w_data,
+      mst2_w_strb 	=> mst2_w_strb,
+      mst2_w_last 	=> mst2_w_last,
+      mst2_w_user 	=> (others => '0'),
+      mst2_w_valid 	=> mst2_w_valid,
+      mst2_w_ready 	=> mst2_w_ready,
+      mst2_b_id 	=> mst2_b_id,
+      mst2_b_resp 	=> mst2_b_resp,
+      mst2_b_user 	=> mst2_b_user,
+      mst2_b_valid 	=> mst2_b_valid,
+      mst2_b_ready 	=> mst2_b_ready,
+      mst2_ar_id	=> mst2_ar_id,
+      mst2_ar_addr 	=> mst2_ar_addr,
+      mst2_ar_len 	=> mst2_ar_len,
+      mst2_ar_size 	=> mst2_ar_size,
+      mst2_ar_burst 	=> mst2_ar_burst,
+      mst2_ar_lock 	=> mst2_ar_lock,
+      mst2_ar_cache 	=> (others => '0'),
+      mst2_ar_prot 	=> mst2_ar_prot,
+      mst2_ar_qos 	=> (others => '0'),
+      mst2_ar_region 	=> (others => '0'),
+      mst2_ar_user 	=> (others => '0'),
+      mst2_ar_valid 	=> mst2_ar_valid,
+      mst2_ar_ready 	=> mst2_ar_ready,
+      mst2_r_id 	=> mst2_r_id,
+      mst2_r_data 	=> mst2_r_data,
+      mst2_r_resp 	=> mst2_r_resp,
+      mst2_r_last 	=> mst2_r_last,
+      mst2_r_user 	=> mst2_r_user,
+      mst2_r_valid 	=> mst2_r_valid,
+      mst2_r_ready 	=> mst2_r_ready,
+
+
+      rom_aw_id 	=> rom_aw_id,
+      rom_aw_addr 	=> rom_aw_addr,
+      rom_aw_len 	=> rom_aw_len,
+      rom_aw_size 	=> rom_aw_size,
+      rom_aw_burst 	=> rom_aw_burst,
+      rom_aw_lock 	=> rom_aw_lock,
+      rom_aw_cache 	=> rom_aw_cache,
+      rom_aw_prot 	=> rom_aw_prot,
+      rom_aw_qos 	=> rom_aw_qos,
+      rom_aw_atop 	=> rom_aw_atop,
+      rom_aw_region 	=> rom_aw_region,
+      rom_aw_user 	=> rom_aw_user,
+      rom_aw_valid 	=> rom_aw_valid,
+      rom_aw_ready 	=> '0',
+      rom_w_data 	=> rom_w_data,
+      rom_w_strb 	=> rom_w_strb,
+      rom_w_last 	=> rom_w_last,
+      rom_w_user 	=> rom_w_user,
+      rom_w_valid 	=> rom_w_valid,
+      rom_w_ready 	=> '0',
+      rom_b_id 		=> (others => '0'),
+      rom_b_resp 	=> (others => '0'),
+      rom_b_user 	=> (others => '0'),
+      rom_b_valid 	=> '0',
+      rom_b_ready 	=> rom_b_ready,
+      rom_ar_id 	=> rom_ar_id,
+      rom_ar_addr 	=> rom_ar_addr,
+      rom_ar_len 	=> rom_ar_len,
+      rom_ar_size 	=> rom_ar_size,
+      rom_ar_burst 	=> rom_ar_burst,
+      rom_ar_lock 	=> rom_ar_lock,
+      rom_ar_cache 	=> rom_ar_cache,
+      rom_ar_prot 	=> rom_ar_prot,
+      rom_ar_qos 	=> rom_ar_qos,
+      rom_ar_region 	=> rom_ar_region,
+      rom_ar_user 	=> rom_ar_user,
+      rom_ar_valid 	=> rom_ar_valid,
+      rom_ar_ready 	=> '0',
+      rom_r_id 		=> (others => '0'),
+      rom_r_data 	=> (others => '0'),
+      rom_r_resp 	=> (others => '0'),
+      rom_r_last 	=> '0',
+      rom_r_user 	=> (others => '0'),
+      rom_r_valid 	=> '0',
+      rom_r_ready 	=> rom_r_ready,
+
+      dram_aw_id 	=> s_axi_awid(3 downto 0),
+      dram_aw_addr 	=> s_axi_awaddr,
+      dram_aw_len 	=> s_axi_awlen,
+      dram_aw_size 	=> s_axi_awsize,
+      dram_aw_burst 	=> s_axi_awburst,
+      dram_aw_lock 	=> s_axi_awlock,
+      dram_aw_cache 	=> s_axi_awcache,
+      dram_aw_prot 	=> s_axi_awprot,
+      dram_aw_qos 	=> dram_aw_qos,
+      dram_aw_atop 	=> dram_aw_atop,
+      dram_aw_region 	=> dram_aw_region,
+      dram_aw_user 	=> dram_aw_user,
+      dram_aw_valid 	=> s_axi_awvalid,
+      dram_aw_ready 	=> s_axi_awready,
+      dram_w_data 	=> s_axi_wdata,
+      dram_w_strb 	=> s_axi_wstrb,
+      dram_w_last 	=> s_axi_wlast,
+      dram_w_user 	=> dram_w_user,
+      dram_w_valid 	=> s_axi_wvalid,
+      dram_w_ready 	=> s_axi_wready,
+      dram_b_id 	=> s_axi_bid(3 downto 0),
+      dram_b_resp 	=> s_axi_bresp,
+      dram_b_user 	=> dram_b_user,
+      dram_b_valid 	=> s_axi_bvalid,
+      dram_b_ready 	=> s_axi_bready,
+      dram_ar_id 	=> s_axi_arid(3 downto 0),
+      dram_ar_addr 	=> s_axi_araddr,
+      dram_ar_len 	=> s_axi_arlen,
+      dram_ar_size 	=> s_axi_arsize,
+      dram_ar_burst 	=> s_axi_arburst,
+      dram_ar_lock 	=> s_axi_arlock,
+      dram_ar_cache 	=> s_axi_arcache,
+      dram_ar_prot 	=> s_axi_arprot,
+      dram_ar_qos 	=> dram_ar_qos,
+      dram_ar_region 	=> dram_ar_region,
+      dram_ar_user 	=> dram_ar_user,
+      dram_ar_valid 	=> s_axi_arvalid,
+      dram_ar_ready 	=> s_axi_arready,
+      dram_r_id 	=> s_axi_rid(3 downto 0),
+      dram_r_data 	=> s_axi_rdata,
+      dram_r_resp 	=> s_axi_rresp,
+      dram_r_last 	=> s_axi_rlast,
+      dram_r_user 	=> dram_r_user,
+      dram_r_valid 	=> s_axi_rvalid,
+      dram_r_ready 	=> s_axi_rready
+    );
+  end generate axi_crossbar_gen;
+
+  s_axi_awid(7 downto 4) <= (others => '0');
+  s_axi_arid(7 downto 4) <= (others => '0');
+
+  no_axi_crossbar_gen: if this_has_ddr = 0 generate
+--    ahbsi <= ahbs_in_none;
     ahbmi <= ahbm_in_none;
-  end generate no_ahb_bus_gen;
+  end generate no_axi_crossbar_gen;
 
 
   -----------------------------------------------------------------------
@@ -378,11 +854,11 @@ begin
     ahbmo(i) <= ahbm_none;
   end generate;
 
-  no_hslv_gen : for i in 0 to NAHBSLV - 1 generate
-    no_hslv_i_gen : if this_local_ahb_en(i) = '0' generate
-      ahbso(i) <= ahbs_none;
-    end generate no_hslv_i_gen;
-  end generate;
+--  no_hslv_gen : for i in 0 to NAHBSLV - 1 generate
+--    no_hslv_i_gen : if this_local_ahb_en(i) = '0' generate
+--      ahbso(i) <= ahbs_none;
+--    end generate no_hslv_i_gen;
+--  end generate;
 
   no_pslv_gen : for i in 0 to NAPBSLV - 1 generate
     no_pslv_i_gen : if this_local_apb_en(i) = '0' generate
@@ -395,19 +871,19 @@ begin
   -----------------------------------------------------------------------------
 
   -- DDR Controller
-  ddr_gen: if this_has_ddr = 1 generate
-    ddr_ahbso_gen: process (ddr_ahbso, this_ddr_hconfig) is
-    begin  -- process ddr_ahbso_gen
-      ahbso(0)         <= ddr_ahbso;
-      ahbso(0).hconfig <= this_ddr_hconfig;
-    end process ddr_ahbso_gen;
-  end generate ddr_gen;
+--  ddr_gen: if this_has_ddr = 1 generate
+--    ddr_ahbso_gen: process (ddr_ahbso, this_ddr_hconfig) is
+--    begin  -- process ddr_ahbso_gen
+--      ahbso(0)         <= ddr_ahbso;
+--      ahbso(0).hconfig <= this_ddr_hconfig;
+--    end process ddr_ahbso_gen;
+--  end generate ddr_gen;
 
-  fpga_mem_gen: if this_has_ddr = 0 generate
-    ahbso(0) <= ahbs_none;
-  end generate fpga_mem_gen;
+--  fpga_mem_gen: if this_has_ddr = 0 generate
+--    ahbso(0) <= ahbs_none;
+--  end generate fpga_mem_gen;
 
-  ddr_ahbsi <= ahbsi;
+--  ddr_ahbsi <= ahbsi;
 
   -----------------------------------------------------------------------------
   -- Services
@@ -443,9 +919,9 @@ begin
   begin
     if this_has_ddr = 1 then
       mon_ddr.word_transfer <= '0';
-      if ahbsi.hready =  '1' and ahbsi.htrans /= HTRANS_IDLE then
-        mon_ddr.word_transfer <= '1';
-      end if;
+--      if ahbsi.hready =  '1' and ahbsi.htrans /= HTRANS_IDLE then
+--        mon_ddr.word_transfer <= '1';
+--      end if;
     else
       -- TODO: connect to FPGA link activity
       mon_ddr.word_transfer <= '0';
@@ -482,41 +958,75 @@ begin
   no_cache_coherence : if CFG_LLC_ENABLE = 0 generate
 
     -- Hendle CPU coherent requests and accelerator non-coherent DMA
-    noc2ahbmst_1 : noc2ahbmst
+    noc2aximst_1 : noc2aximst
       generic map (
-        tech                => CFG_FABTECH,
-        hindex              => 0,
-        axitran             => GLOB_CPU_AXI,
-        little_end          => GLOB_CPU_RISCV,
-        eth_dma             => 0,
-        narrow_noc          => 0,
-        cacheline           => CFG_DLINE,
-        l2_cache_en         => CFG_L2_ENABLE,
-        this_coh_flit_size  => COH_NOC_FLIT_SIZE)
+        tech        		=> CFG_FABTECH,
+        mst_index   		=> 0,
+        axitran     		=> GLOB_CPU_AXI,
+        little_end  		=> GLOB_CPU_RISCV,
+        eth_dma     		=> 0,
+        narrow_noc  		=> 0,
+        cacheline   		=> CFG_DLINE,	
+		this_coh_flit_size  => COH_NOC_FLIT_SIZE)
       port map (
-        rst                       => rst,
-        clk                       => tile_clk,
-        local_y                   => this_local_y,
-        local_x                   => this_local_x,
-        ahbmi                     => ahbmi,
-        ahbmo                     => ahbmo(0),
-        coherence_req_rdreq       => coherence_req_rdreq,
-        coherence_req_data_out    => coherence_req_data_out,
-        coherence_req_empty       => coherence_req_empty,
-        coherence_fwd_wrreq       => coherence_fwd_wrreq,
-        coherence_fwd_data_in     => coherence_fwd_data_in,
-        coherence_fwd_full        => coherence_fwd_full,
-        coherence_rsp_snd_wrreq   => coherence_rsp_snd_wrreq,
-        coherence_rsp_snd_data_in => coherence_rsp_snd_data_in,
-        coherence_rsp_snd_full    => coherence_rsp_snd_full,
-        dma_rcv_rdreq             => dma_rcv_rdreq,
-        dma_rcv_data_out          => dma_rcv_data_out,
-        dma_rcv_empty             => dma_rcv_empty,
-        dma_snd_wrreq             => dma_snd_wrreq,
-        dma_snd_data_in           => dma_snd_data_in,
-        dma_snd_full              => dma_snd_full,
-        dma_snd_atleast_4slots    => dma_snd_atleast_4slots,
-        dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
+        ACLK  		=> tile_clk,
+        ARESETn 	=> rst,
+        local_y 	=> this_local_y,
+        local_x 	=> this_local_x,
+        --AR Channel
+        AR_ID 		=> mst0_ar_id,
+        AR_ADDR 	=> mst0_ar_addr,
+        AR_LEN 		=> mst0_ar_len,
+        AR_SIZE 	=> mst0_ar_size,
+        AR_BURST 	=> mst0_ar_burst,
+        AR_LOCK 	=> mst0_ar_lock,
+        AR_PROT 	=> mst0_ar_prot,
+        AR_VALID 	=> mst0_ar_valid,
+        AR_READY 	=> mst0_ar_ready,
+        --R Channel
+        R_ID    	=> mst0_r_id,
+        R_DATA  	=> mst0_r_data,
+        R_RESP  	=> mst0_r_resp,
+        R_LAST  	=> mst0_r_last,
+        R_VALID 	=> mst0_r_valid,
+        R_READY 	=> mst0_r_ready,
+        --AW Channel
+        AW_ID 		=> mst0_aw_id,
+        AW_ADDR 	=> mst0_aw_addr,
+        AW_LEN 		=> mst0_aw_len,
+        AW_SIZE 	=> mst0_aw_size,
+        AW_BURST 	=> mst0_aw_burst,
+        AW_LOCK 	=> mst0_aw_lock,
+        AW_PROT 	=> mst0_aw_prot,
+        AW_VALID 	=> mst0_aw_valid,
+        AW_READY 	=> mst0_aw_ready,
+        --W Channel
+        W_DATA 		=> mst0_w_data,
+        W_STRB 		=> mst0_w_strb,
+        W_LAST 		=> mst0_w_last,
+        W_VALID 	=> mst0_w_valid,
+        W_READY 	=> mst0_w_ready,
+        --B Channel
+        B_ID 		=> mst0_b_id,
+        B_RESP 		=> mst0_b_resp,
+        B_VALID 	=> mst0_b_valid,
+        B_READY 	=> mst0_b_ready,
+        --NoC
+        coherence_req_rdreq 		=> coherence_req_rdreq,
+        coherence_req_data_out 		=> coherence_req_data_out,
+        coherence_req_empty			=> coherence_req_empty,
+        coherence_rsp_snd_wrreq 	=> coherence_rsp_snd_wrreq,
+        coherence_rsp_snd_data_in 	=> coherence_rsp_snd_data_in,
+        coherence_rsp_snd_full 		=> coherence_rsp_snd_full,
+
+        dma_rcv_rdreq             	=> dma_rcv_rdreq,
+        dma_rcv_data_out          	=> dma_rcv_data_out,
+        dma_rcv_empty             	=> dma_rcv_empty,
+        dma_snd_wrreq             	=> dma_snd_wrreq,
+        dma_snd_data_in           	=> dma_snd_data_in,
+        dma_snd_full              	=> dma_snd_full
+
+      );
 
     -- No LLC wrapper
     ahbmo(2)      <= ahbm_none;
@@ -530,42 +1040,105 @@ begin
     fpga_credit_out <= '0';
 
     -- Handle JTAG or EDCL requests to memory as well as ETH DMA
-    noc2ahbmst_2 : noc2ahbmst
+    noc2aximst_2 : noc2aximst
       generic map (
-        tech                => CFG_FABTECH,
-        hindex              => 1,
-        axitran             => 0,
-        little_end          => 0,
-        eth_dma             => 1,               -- Exception for fixed 32-bits DMA
-        narrow_noc          => 0,
-        cacheline           => 1,
-        l2_cache_en         => 0,
-        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
+        tech        => CFG_FABTECH,
+        mst_index   => 1,
+        axitran     => 0,
+        little_end  => 0,
+        eth_dma     => 1,
+        narrow_noc  => 0,
+        cacheline   => 1,
+		this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
-        rst                       => rst,
-        clk                       => tile_clk,
-        local_y                   => this_local_y,
-        local_x                   => this_local_x,
-        ahbmi                     => ahbmi,
-        ahbmo                     => ahbmo(1),
-        coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
-        coherence_req_data_out    => remote_ahbm_rcv_data_out,
-        coherence_req_empty       => remote_ahbm_rcv_empty,
-        coherence_fwd_wrreq       => open,
-        coherence_fwd_data_in     => open,
-        coherence_fwd_full        => '0',
-        coherence_rsp_snd_wrreq   => remote_ahbm_snd_wrreq,
-        coherence_rsp_snd_data_in => remote_ahbm_snd_data_in,
-        coherence_rsp_snd_full    => remote_ahbm_snd_full,
-        -- These requests are treated as non-coherent when no LLC is present!
-        dma_rcv_rdreq             => coherent_dma_rcv_rdreq,
-        dma_rcv_data_out          => coherent_dma_rcv_data_out,
-        dma_rcv_empty             => coherent_dma_rcv_empty,
-        dma_snd_wrreq             => coherent_dma_snd_wrreq,
-        dma_snd_data_in           => coherent_dma_snd_data_in,
-        dma_snd_full              => coherent_dma_snd_full,
-        dma_snd_atleast_4slots    => coherent_dma_snd_atleast_4slots,
-        dma_snd_exactly_3slots    => coherent_dma_snd_exactly_3slots);
+        ACLK  		=> tile_clk,
+        ARESETn 	=> rst,
+        local_y 	=> this_local_y,
+        local_x 	=> this_local_x,
+        --AR Channel
+        AR_ID 		=> mst1_ar_id,
+        AR_ADDR 	=> mst1_ar_addr,
+        AR_LEN 		=> mst1_ar_len,
+        AR_SIZE 	=> mst1_ar_size,
+        AR_BURST 	=> mst1_ar_burst,
+        AR_LOCK 	=> mst1_ar_lock,
+        AR_PROT 	=> mst1_ar_prot,
+        AR_VALID 	=> mst1_ar_valid,
+        AR_READY 	=> mst1_ar_ready,
+        --R Channel
+        R_ID 		=> mst1_r_id,
+        R_DATA 		=> mst1_r_data,
+        R_RESP 		=> mst1_r_resp,
+        R_LAST 		=> mst1_r_last,
+        R_VALID 	=> mst1_r_valid,
+        R_READY 	=> mst1_r_ready,
+        --AW Channel
+        AW_ID 		=> mst1_aw_id,
+        AW_ADDR 	=> mst1_aw_addr,
+        AW_LEN 		=> mst1_aw_len,
+        AW_SIZE 	=> mst1_aw_size,
+        AW_BURST 	=> mst1_aw_burst,
+        AW_LOCK 	=> mst1_aw_lock,
+        AW_PROT 	=> mst1_aw_prot,
+        AW_VALID 	=> mst1_aw_valid,
+        AW_READY 	=> mst1_aw_ready,
+        --W Channel
+        W_DATA 		=> mst1_w_data,
+        W_STRB 		=> mst1_w_strb,
+        W_LAST 		=> mst1_w_last,
+        W_VALID 	=> mst1_w_valid,
+        W_READY 	=> mst1_w_ready,
+        --B Channel
+        B_ID 		=> mst1_b_id,
+        B_RESP 		=> mst1_b_resp,
+        B_VALID 	=> mst1_b_valid,
+        B_READY 	=> mst1_b_ready,
+        --NoC
+        coherence_req_rdreq 		=> remote_ahbm_rcv_rdreq,
+        coherence_req_data_out 		=> remote_ahbm_rcv_data_out,
+        coherence_req_empty 		=> remote_ahbm_rcv_empty,
+        coherence_rsp_snd_wrreq 	=> remote_ahbm_snd_wrreq,
+        coherence_rsp_snd_data_in 	=> remote_ahbm_snd_data_in,
+        coherence_rsp_snd_full 		=> remote_ahbm_snd_full,
+
+        dma_rcv_rdreq             	=> coherent_dma_rcv_rdreq,
+        dma_rcv_data_out          	=> coherent_dma_rcv_data_out,
+        dma_rcv_empty             	=> coherent_dma_rcv_empty,
+        dma_snd_wrreq             	=> coherent_dma_snd_wrreq,
+        dma_snd_data_in           	=> coherent_dma_snd_data_in,
+        dma_snd_full              	=> coherent_dma_snd_full
+        );
+
+		-- Tie off mst2 signals (only 2 masters are used)
+      mst2_aw_id 	<= "10";
+      mst2_aw_addr 	<= (others => '0');
+      mst2_aw_len 	<= (others => '0');
+      mst2_aw_size 	<= (others => '0');
+      mst2_aw_burst <= (others => '0');	
+      mst2_aw_lock 	<= '0';
+      mst2_aw_prot 	<= (others => '0');
+      mst2_aw_valid	<= '0';
+
+      mst2_w_data 	<= (others => '0');
+      mst2_w_strb 	<= (others => '0');
+      mst2_w_last 	<= '0';
+      mst2_w_valid 	<= '0';
+	
+      mst2_b_ready 	<= '0';
+
+      mst2_ar_id	<= "10";
+      mst2_ar_addr 	<= (others => '0');
+      mst2_ar_len 	<= (others => '0');
+      mst2_ar_size 	<= (others => '0');
+      mst2_ar_burst <= (others => '0');	
+      mst2_ar_lock 	<= '0';
+      mst2_ar_prot 	<= (others => '0');
+      mst2_ar_valid <= '0';
+	
+      mst2_r_ready 	<= '0';
+
+
+
 
   end generate no_cache_coherence;
 
@@ -573,47 +1146,83 @@ begin
 
     non_coh_dma_proxy_gen: if this_has_ddr /= 0 generate
     -- Handle accelerators non-coherent DMA
-    noc2ahbmst_1 : noc2ahbmst
+
+    noc2aximst_1 : noc2aximst
       generic map (
-        tech                => CFG_FABTECH,
-        hindex              => 0,
-        axitran             => GLOB_CPU_AXI,
-        little_end          => GLOB_CPU_RISCV,
-        eth_dma             => 0,
-        narrow_noc          => 0,
-        cacheline           => CFG_DLINE,
-        l2_cache_en         => CFG_L2_ENABLE,
-        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
+        tech        		=> CFG_FABTECH,
+        mst_index   		=> 0,
+        axitran     		=> GLOB_CPU_AXI,
+        little_end  		=> GLOB_CPU_RISCV,
+        eth_dma     		=> 0,
+        narrow_noc  		=> 0,
+        cacheline   		=> CFG_DLINE,
+		this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
-        rst                       => rst,
-        clk                       => tile_clk,
-        local_y                   => this_local_y,
-        local_x                   => this_local_x,
-        ahbmi                     => ahbmi,
-        ahbmo                     => ahbmo(0),
+        ACLK  		=> tile_clk,
+        ARESETn 	=> rst,
+        local_y 	=> this_local_y,
+        local_x 	=> this_local_x,
+        --AR Channel
+        AR_ID 		=> mst0_ar_id,
+        AR_ADDR 	=> mst0_ar_addr,
+        AR_LEN 		=> mst0_ar_len,
+        AR_SIZE 	=> mst0_ar_size,
+        AR_BURST 	=> mst0_ar_burst,
+        AR_LOCK 	=> mst0_ar_lock,
+        AR_PROT 	=> mst0_ar_prot,
+        AR_VALID 	=> mst0_ar_valid,
+        AR_READY 	=> mst0_ar_ready,
+        --R Channel
+        R_ID    	=> mst0_r_id,
+        R_DATA  	=> mst0_r_data,
+        R_RESP  	=> mst0_r_resp,
+        R_LAST  	=> mst0_r_last,
+        R_VALID 	=> mst0_r_valid,
+        R_READY 	=> mst0_r_ready,
+        --AW Channel
+        AW_ID 		=> mst0_aw_id,
+        AW_ADDR 	=> mst0_aw_addr,
+        AW_LEN 		=> mst0_aw_len,
+        AW_SIZE 	=> mst0_aw_size,
+        AW_BURST 	=> mst0_aw_burst,
+        AW_LOCK 	=> mst0_aw_lock,
+        AW_PROT 	=> mst0_aw_prot,
+        AW_VALID 	=> mst0_aw_valid,
+        AW_READY 	=> mst0_aw_ready,
+        --W Channel
+        W_DATA 		=> mst0_w_data,
+        W_STRB 		=> mst0_w_strb,
+        W_LAST 		=> mst0_w_last,
+        W_VALID 	=> mst0_w_valid,
+        W_READY 	=> mst0_w_ready,
+        --B Channel
+        B_ID 		=> mst0_b_id,
+        B_RESP 		=> mst0_b_resp,
+        B_VALID 	=> mst0_b_valid,
+        B_READY 	=> mst0_b_ready,
+        --NoC
         coherence_req_rdreq       => open,
         coherence_req_data_out    => (others => '0'),
         coherence_req_empty       => '1',
-        coherence_fwd_wrreq       => open,
-        coherence_fwd_data_in     => open,
-        coherence_fwd_full        => '0',
         coherence_rsp_snd_wrreq   => open,
         coherence_rsp_snd_data_in => open,
         coherence_rsp_snd_full    => '0',
-        dma_rcv_rdreq             => dma_rcv_rdreq,
-        dma_rcv_data_out          => dma_rcv_data_out,
-        dma_rcv_empty             => dma_rcv_empty,
-        dma_snd_wrreq             => dma_snd_wrreq,
-        dma_snd_data_in           => dma_snd_data_in,
-        dma_snd_full              => dma_snd_full,
-        dma_snd_atleast_4slots    => dma_snd_atleast_4slots,
-        dma_snd_exactly_3slots    => dma_snd_exactly_3slots);
+
+        dma_rcv_rdreq             	=> dma_rcv_rdreq,
+        dma_rcv_data_out          	=> dma_rcv_data_out,
+        dma_rcv_empty             	=> dma_rcv_empty,
+        dma_snd_wrreq             	=> dma_snd_wrreq,
+        dma_snd_data_in           	=> dma_snd_data_in,
+        dma_snd_full              	=> dma_snd_full
+
+      );
+
     end generate non_coh_dma_proxy_gen;
 
     -- Handle CPU coherent requests and accelerators coherent DMA
     llc_rstn <= not srst and rst;
 
-    llc_wrapper_1 : llc_wrapper
+    llc_wrapper_1 : llc_wrapper_axi
       generic map (
         tech          => CFG_FABTECH,
         sets          => CFG_LLC_SETS,
@@ -644,8 +1253,46 @@ begin
         local_y                    => this_local_y,
         local_x                    => this_local_x,
         pconfig                    => this_llc_pconfig,
-        ahbmi                      => ahbmi,
-        ahbmo                      => ahbmo(2),
+
+        --AR Channel
+        AR_ID 		=> mst2_ar_id,
+        AR_ADDR 	=> mst2_ar_addr,
+        AR_LEN 		=> mst2_ar_len,
+        AR_SIZE 	=> mst2_ar_size,
+        AR_BURST 	=> mst2_ar_burst,
+        AR_LOCK 	=> mst2_ar_lock,
+        AR_PROT 	=> mst2_ar_prot,
+        AR_VALID 	=> mst2_ar_valid,
+        AR_READY 	=> mst2_ar_ready,
+        --R Channel
+        R_ID 		=> mst2_r_id,
+        R_DATA 		=> mst2_r_data,
+        R_RESP 		=> mst2_r_resp,
+        R_LAST 		=> mst2_r_last,
+        R_VALID 	=> mst2_r_valid,
+        R_READY 	=> mst2_r_ready,
+        --AW Channel
+        AW_ID 		=> mst2_aw_id,
+        AW_ADDR 	=> mst2_aw_addr,
+        AW_LEN 		=> mst2_aw_len,
+        AW_SIZE 	=> mst2_aw_size,
+        AW_BURST 	=> mst2_aw_burst,
+        AW_LOCK 	=> mst2_aw_lock,
+        AW_PROT 	=> mst2_aw_prot,
+        AW_VALID 	=> mst2_aw_valid,
+        AW_READY 	=> mst2_aw_ready,
+        --W Channel
+        W_DATA 		=> mst2_w_data,
+        W_STRB 		=> mst2_w_strb,
+        W_LAST 		=> mst2_w_last,
+        W_VALID 	=> mst2_w_valid,
+        W_READY 	=> mst2_w_ready,
+        --B Channel
+        B_ID 		=> mst2_b_id,
+        B_RESP 		=> mst2_b_resp,
+        B_VALID 	=> mst2_b_valid,
+        B_READY 	=> mst2_b_ready,
+
         apbi                       => apbi,
         apbo                       => apbo(1),
         -- NoC1->tile
@@ -734,41 +1381,76 @@ begin
 
     esplink_proxy_gen: if this_has_ddr /= 0 generate
     -- Handle JTAG or EDCL requests to memory
-    noc2ahbmst_2 : noc2ahbmst
+
+    noc2aximst_2 : noc2aximst
       generic map (
-        tech                => CFG_FABTECH,
-        hindex              => 1,
-        axitran             => 0,
-        little_end          => 0,
-        eth_dma             => 0,
-        narrow_noc          => 0,
-        cacheline           => 1,
-        l2_cache_en         => 0,
-        this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
+        tech        => CFG_FABTECH,
+        mst_index   => 1,
+        axitran     => 0,
+        little_end  => 0,
+        eth_dma     => 0,
+        narrow_noc  => 0,
+        cacheline   => 1,
+		this_coh_flit_size  => ARCH_NOC_FLIT_SIZE)
       port map (
-        rst                       => rst,
-        clk                       => tile_clk,
-        local_y                   => this_local_y,
-        local_x                   => this_local_x,
-        ahbmi                     => ahbmi,
-        ahbmo                     => ahbmo(1),
-        coherence_req_rdreq       => remote_ahbm_rcv_rdreq,
-        coherence_req_data_out    => remote_ahbm_rcv_data_out,
-        coherence_req_empty       => remote_ahbm_rcv_empty,
-        coherence_fwd_wrreq       => open,
-        coherence_fwd_data_in     => open,
-        coherence_fwd_full        => '0',
-        coherence_rsp_snd_wrreq   => remote_ahbm_snd_wrreq,
-        coherence_rsp_snd_data_in => remote_ahbm_snd_data_in,
-        coherence_rsp_snd_full    => remote_ahbm_snd_full,
+        ACLK  		=> tile_clk,
+        ARESETn 	=> rst,
+        local_y 	=> this_local_y,
+        local_x 	=> this_local_x,
+        --AR Channel
+        AR_ID 		=> mst1_ar_id,
+        AR_ADDR 	=> mst1_ar_addr,
+        AR_LEN 		=> mst1_ar_len,
+        AR_SIZE 	=> mst1_ar_size,
+        AR_BURST 	=> mst1_ar_burst,
+        AR_LOCK 	=> mst1_ar_lock,
+        AR_PROT 	=> mst1_ar_prot,
+        AR_VALID 	=> mst1_ar_valid,
+        AR_READY 	=> mst1_ar_ready,
+        --R Channel
+        R_ID 		=> mst1_r_id,
+        R_DATA 		=> mst1_r_data,
+        R_RESP 		=> mst1_r_resp,
+        R_LAST 		=> mst1_r_last,
+        R_VALID 	=> mst1_r_valid,
+        R_READY 	=> mst1_r_ready,
+        --AW Channel
+        AW_ID 		=> mst1_aw_id,
+        AW_ADDR 	=> mst1_aw_addr,
+        AW_LEN 		=> mst1_aw_len,
+        AW_SIZE 	=> mst1_aw_size,
+        AW_BURST 	=> mst1_aw_burst,
+        AW_LOCK 	=> mst1_aw_lock,
+        AW_PROT 	=> mst1_aw_prot,
+        AW_VALID 	=> mst1_aw_valid,
+        AW_READY 	=> mst1_aw_ready,
+        --W Channel
+        W_DATA 		=> mst1_w_data,
+        W_STRB 		=> mst1_w_strb,
+        W_LAST 		=> mst1_w_last,
+        W_VALID 	=> mst1_w_valid,
+        W_READY 	=> mst1_w_ready,
+        --B Channel
+        B_ID 		=> mst1_b_id,
+        B_RESP 		=> mst1_b_resp,
+        B_VALID 	=> mst1_b_valid,
+        B_READY 	=> mst1_b_ready,
+        --NoC
+        coherence_req_rdreq 		=> remote_ahbm_rcv_rdreq,
+        coherence_req_data_out 		=> remote_ahbm_rcv_data_out,
+        coherence_req_empty 		=> remote_ahbm_rcv_empty,
+        coherence_rsp_snd_wrreq 	=> remote_ahbm_snd_wrreq,
+        coherence_rsp_snd_data_in 	=> remote_ahbm_snd_data_in,
+        coherence_rsp_snd_full 		=> remote_ahbm_snd_full,
+
         dma_rcv_rdreq             => open,
         dma_rcv_data_out          => (others => '0'),
         dma_rcv_empty             => '1',
         dma_snd_wrreq             => open,
         dma_snd_data_in           => open,
-        dma_snd_full              => '0',
-        dma_snd_atleast_4slots    => '1',
-        dma_snd_exactly_3slots    => '0');
+        dma_snd_full              => '0'
+        );
+
     end generate esplink_proxy_gen;
 
   end generate with_cache_coherence;

@@ -720,6 +720,75 @@ package tile is
       dma_snd_exactly_3slots    : in  std_ulogic);
   end component;
 
+  component noc2aximst is
+      generic (
+        tech       			: integer; 
+        mst_index  			: integer; 
+        axitran    			: integer; 
+        little_end 			: integer; 
+        eth_dma    			: integer; 
+        narrow_noc 			: integer; 
+        cacheline  			: integer;
+		this_coh_flit_size 	: integer); 
+      port (
+        ACLK		: in std_ulogic;
+        ARESETn 	: in std_ulogic;
+        local_y 	: in local_yx;
+        local_x 	: in local_yx;
+
+        AR_ID 		: out std_logic_vector(1 downto 0);
+        AR_ADDR 	: out std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+        AR_LEN 		: out std_logic_vector(7 downto 0);
+        AR_SIZE 	: out std_logic_vector(2 downto 0);
+        AR_BURST 	: out std_logic_vector(1 downto 0);
+        AR_LOCK 	: out std_logic;
+        AR_PROT 	: out std_logic_vector(2 downto 0);
+        AR_VALID 	: out std_logic;
+        AR_READY 	: in std_logic;
+
+        R_ID 		: in std_logic_vector(1 downto 0);
+        R_DATA 		: in std_logic_vector(AXIDW-1 downto 0);
+        R_RESP 		: in std_logic_vector(1 downto 0);
+        R_LAST 		: in std_logic;
+        R_VALID 	: in std_logic;
+        R_READY 	: out std_logic;
+
+        AW_ID 		: out std_logic_vector(1 downto 0);
+        AW_ADDR 	: out std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+        AW_LEN 		: out std_logic_vector(7 downto 0);
+        AW_SIZE 	: out std_logic_vector(2 downto 0);
+        AW_BURST 	: out std_logic_vector(1 downto 0);
+        AW_LOCK 	: out std_logic;
+        AW_PROT 	: out std_logic_vector(2 downto 0);
+        AW_VALID 	: out std_logic;
+        AW_READY 	: in std_logic;
+
+        W_DATA 		: out std_logic_vector(AXIDW-1 downto 0);
+        W_STRB 		: out std_logic_vector(AW-1 downto 0);
+        W_LAST 		: out std_logic;
+        W_VALID 	: out std_logic;
+        W_READY 	: in std_logic;
+
+        B_ID 		: in std_logic_vector(1 downto 0);
+        B_RESP 		: in std_logic_vector(1 downto 0);
+        B_VALID 	: in std_logic;
+        B_READY 	: out std_logic;
+
+        coherence_req_rdreq 		: out std_ulogic;
+        coherence_req_data_out 		: in std_logic_vector(this_coh_flit_size-1 downto 0);
+        coherence_req_empty 		: in std_ulogic;
+        coherence_rsp_snd_wrreq 	: out std_ulogic;
+        coherence_rsp_snd_data_in 	: out std_logic_vector(this_coh_flit_size-1 downto 0);
+        coherence_rsp_snd_full 		: in std_ulogic;
+
+        dma_rcv_rdreq             	: out std_ulogic;
+        dma_rcv_data_out          	: in dma_noc_flit_type;
+        dma_rcv_empty             	: in std_ulogic;
+        dma_snd_wrreq             	: out std_ulogic;
+        dma_snd_data_in           	: out dma_noc_flit_type;
+        dma_snd_full              	: in std_ulogic);
+  end component;
+
   component esp_acc_dma
     generic (
       tech               : integer;

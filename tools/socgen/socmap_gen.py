@@ -393,6 +393,10 @@ def print_header(fp, package):
   fp.write("-- Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
   fp.write("-- SPDX-License-Identifier: Apache-2.0\n\n")
 
+def print_headerSV(fp, package):
+  fp.write("// Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
+  fp.write("// SPDX-License-Identifier: Apache-2.0\n\n")
+
 def print_libs(fp, std_only):
   fp.write("library ieee;\n")
   fp.write("use ieee.std_logic_1164.all;\n")
@@ -459,6 +463,41 @@ def print_global_constants(fp, soc):
     fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 1;\n\n")
   else:
     fp.write("  constant GLOB_CPU_LLSC : integer range 0 to 1 := 0;\n\n")
+
+  if soc.CPU_ARCH.get() == "leon3":
+    fp.write("  constant DRAM_BASE : std_logic_vector(31 downto 0) := x\"4000_0000\";\n")
+  else:
+    fp.write("  constant DRAM_BASE : std_logic_vector(31 downto 0) := x\"8000_0000\";\n")
+
+def print_global_constantsSV(fp, soc):
+
+  fp.write("  ////// Global architecture parameters\n")
+
+  fp.write("  ////// General\n")
+
+  fp.write("  localparam integer ARCH_BITS  				= " + str(soc.ARCH_BITS) + ";\n")
+  fp.write("  localparam integer AXIDW  					= ARCH_BITS" + ";\n")
+  fp.write("  localparam integer AW  						= AXIDW/8" + ";\n")
+  fp.write("  localparam integer COH_NOC_WIDTH				= " + str(soc.noc.coh_noc_width.get()) + ";\n")
+  fp.write("  localparam integer DMA_NOC_WIDTH 				= " + str(soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  localparam integer MAX_NOC_WIDTH 				= " + str(soc.noc.coh_noc_width.get() if soc.noc.coh_noc_width.get() > soc.noc.dma_noc_width.get() else soc.noc.dma_noc_width.get()) + ";\n")
+  fp.write("  localparam integer MULTICAST_NOC_EN 			= " + str(soc.noc.multicast_en.get())  + ";\n")
+  fp.write("  localparam integer MAX_MCAST_DESTS 			= " + str(soc.noc.max_mcast_dests.get())  + ";\n")
+  fp.write("  localparam integer GLOB_WORD_OFFSET_BITS 		= " + str(int(math.log2(soc.cache_line_size.get()/soc.ARCH_BITS))) + ";\n")
+  fp.write("  localparam integer GLOB_DMA_WORD_OFFSET_BITS	= " + str(int(math.log2(soc.cache_line_size.get()/32))) + ";\n")
+  fp.write("  localparam integer GLOB_BYTE_OFFSET_BITS 		= " + str(int(math.log2(soc.ARCH_BITS/8))) +";\n")
+  fp.write("  localparam integer GLOB_OFFSET_BITS 			= GLOB_WORD_OFFSET_BITS + GLOB_BYTE_OFFSET_BITS;\n")
+  fp.write("  localparam integer GLOB_ADDR_INCR 			= " + str(int(soc.ARCH_BITS/8)) +";\n")
+  # TODO: Keep physical address to 32 bits for now to reduce tag size. This will increase to support more memory
+  fp.write("  localparam integer GLOB_PHYS_ADDR_BITS 		= " + str(32) +";\n")
+  fp.write("  localparam integer GLOB_MAXIOSLV 				= " + str(NAPBS) + ";\n\n")
+
+  if soc.CPU_ARCH.get() == "leon3":
+    fp.write("  localparam integer GLOB_CPU_RISCV = 0;\n")
+  else:
+    fp.write("  localparam integer GLOB_CPU_RISCV = 1;\n")
+
+
 
 def print_constants(fp, soc, esp_config):
 
@@ -2836,6 +2875,20 @@ def create_socmap(esp_config, soc):
   fp.close()
 
   print("Created global constants definition into 'esp_global.vhd'")
+
+  #### VERILOG ####
+  # Globals
+  fp2 = open('esp_global_sv.sv', 'w')
+
+  print_headerSV(fp2, "esp_global_sv")
+
+  fp2.write("package esp_global_sv;\n\n")
+  print_global_constantsSV(fp2, soc)
+
+  fp2.write("endpackage\n")
+  fp2.close()
+
+  print("Created global constants definition into 'esp_global_sv.sv'")
 
   # SoC map
   fp = open('socmap.vhd', 'w')
