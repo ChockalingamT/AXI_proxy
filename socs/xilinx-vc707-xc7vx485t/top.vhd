@@ -76,60 +76,6 @@ end;
 
 architecture rtl of top is
 
-component axi_ram_sim is
-  generic(
-    DATA_WIDTH 		: integer := 32;
-    ADDR_WIDTH 		: integer := 32;
-    STRB_WIDTH 		: integer := 4;
-    ID_WIDTH   		: integer := 8;
-    PIPELINE_OUTPUT 	: integer := 0
-  );
-  port(
-    clk 		: in std_logic;
-    rst 		: in std_logic;
-    -- AW Channel
-    s_axi_awid 		: in std_logic_vector(7 downto 0);
-    s_axi_awaddr 	: in std_logic_vector(31 downto 0);
-    s_axi_awlen 	: in std_logic_vector(7 downto 0);
-    s_axi_awsize 	: in std_logic_vector(2 downto 0);
-    s_axi_awburst 	: in std_logic_vector(1 downto 0);
-    s_axi_awlock 	: in std_logic;
-    s_axi_awcache 	: in std_logic_vector(3 downto 0);
-    s_axi_awprot 	: in std_logic_vector(2 downto 0);
-    s_axi_awvalid 	: in std_logic;
-    s_axi_awready 	: out std_logic;
-    -- W Channel
-    s_axi_wdata 	: in std_logic_vector(31 downto 0);
-    s_axi_wstrb 	: in std_logic_vector(3 downto 0);
-    s_axi_wlast 	: in std_logic;
-    s_axi_wvalid 	: in std_logic;
-    s_axi_wready 	: out std_logic;
-    -- B Channel
-    s_axi_bid 		: out std_logic_vector(7 downto 0);
-    s_axi_bresp 	: out std_logic_vector(1 downto 0);
-    s_axi_bvalid 	: out std_logic;
-    s_axi_bready 	: in std_logic;
-    -- AR Channel
-    s_axi_arid 		: in std_logic_vector(7 downto 0);
-    s_axi_araddr 	: in std_logic_vector(31 downto 0);
-    s_axi_arlen 	: in std_logic_vector(7 downto 0);
-    s_axi_arsize 	: in std_logic_vector(2 downto 0);
-    s_axi_arburst 	: in std_logic_vector(1 downto 0);
-    s_axi_arlock 	: in std_logic;
-    s_axi_arcache 	: in std_logic_vector(3 downto 0);
-    s_axi_arprot 	: in std_logic_vector(2 downto 0);
-    s_axi_arvalid 	: in std_logic;
-    s_axi_arready 	: out std_logic;
-    -- R Channel
-    s_axi_rid 		: out std_logic_vector(7 downto 0);
-    s_axi_rdata 	: out std_logic_vector(31 downto 0);
-    s_axi_rresp 	: out std_logic_vector(1 downto 0);
-    s_axi_rlast 	: out std_logic;
-    s_axi_rvalid 	: out std_logic;
-    s_axi_rready 	: in std_logic
-  );
-end component axi_ram_sim;
-
 component sgmii_vc707
   generic(
     pindex          : integer := 0;
@@ -156,89 +102,42 @@ component sgmii_vc707
 end component;
 
 -- FPGA DDR3 Controller. Must be moved to FPGA partition
-component axi2mig_7series
+component ahb2mig_7series
   generic(
     hindex     : integer := 0;
     haddr      : integer := 0;
     hmask      : integer := 16#f00#
   );
   port(
-    ddr3_dq         : inout std_logic_vector(63 downto 0);
-    ddr3_dqs_p      : inout std_logic_vector(7 downto 0);
-    ddr3_dqs_n      : inout std_logic_vector(7 downto 0);
-    ddr3_addr       : out   std_logic_vector(13 downto 0);
-    ddr3_ba         : out   std_logic_vector(2 downto 0);
-    ddr3_ras_n      : out   std_logic;
-    ddr3_cas_n      : out   std_logic;
-    ddr3_we_n       : out   std_logic;
-    ddr3_reset_n    : out   std_logic;
-    ddr3_ck_p       : out   std_logic_vector(0 downto 0);
-    ddr3_ck_n       : out   std_logic_vector(0 downto 0);
-    ddr3_cke        : out   std_logic_vector(0 downto 0);
-    ddr3_cs_n       : out   std_logic_vector(0 downto 0);
-    ddr3_dm         : out   std_logic_vector(7 downto 0);
-    ddr3_odt        : out   std_logic_vector(0 downto 0);
-    sys_clk_p       : in    std_logic;
-    sys_clk_n       : in    std_logic;
-    clk_ref_i       : in    std_logic;
-    ui_clk          : out   std_logic;
-    ui_clk_sync_rst : out   std_logic;
-    mmcm_locked     : out   std_logic;
-    aresetn         : in    std_logic;
-    s_axi_awid0      : in    std_logic_vector(7 downto 0);
-    s_axi_awaddr0    : in    std_logic_vector(31 downto 0);
-    s_axi_awlen     : in    std_logic_vector(7 downto 0);
-    s_axi_awsize    : in    std_logic_vector(2 downto 0);
-    s_axi_awburst   : in    std_logic_vector(1 downto 0);
-    s_axi_awlock    : in    std_logic;
-    s_axi_awcache   : in    std_logic_vector(3 downto 0);
-    s_axi_awprot    : in    std_logic_vector(2 downto 0);
-    s_axi_awqos     : in    std_logic_vector(3 downto 0);
-    s_axi_awvalid   : in    std_logic;  
-    s_axi_awready   : out   std_logic;
-    s_axi_wdata0     : in    std_logic_vector(31 downto 0);
-    s_axi_wstrb0     : in    std_logic_vector(3 downto 0);
-    s_axi_wlast     : in    std_logic;
-    s_axi_wvalid    : in    std_logic;
-    s_axi_wready    : out   std_logic;
-    s_axi_bready    : in    std_logic;
-    s_axi_bid0       : out   std_logic_vector(7 downto 0);
-    s_axi_bresp     : out   std_logic_vector(1 downto 0);
-    s_axi_bvalid    : out   std_logic;
-    s_axi_arid0      : in    std_logic_vector(7 downto 0);
-    s_axi_araddr0    : in    std_logic_vector(31 downto 0);
-    s_axi_arlen     : in    std_logic_vector(7 downto 0);
-    s_axi_arsize    : in    std_logic_vector(2 downto 0);
-    s_axi_arburst   : in    std_logic_vector(1 downto 0);
-    s_axi_arlock    : in    std_logic;
-    s_axi_arcache   : in    std_logic_vector(3 downto 0);
-    s_axi_arprot    : in    std_logic_vector(2 downto 0);
-    s_axi_arqos     : in    std_logic_vector(3 downto 0);
-    s_axi_arvalid   : in    std_logic;
-    s_axi_arready   : out   std_logic;
-    s_axi_rready    : in    std_logic;
-    s_axi_rid0       : out   std_logic_vector(7 downto 0);
-    s_axi_rdata0     : out   std_logic_vector(31 downto 0);
-    s_axi_rresp     : out   std_logic_vector(1 downto 0);
-    s_axi_rlast     : out   std_logic;
-    s_axi_rvalid    : out   std_logic;
-    calib_done      : out   std_logic;
-    rst_n_async     : in    std_logic
+    ddr3_dq           : inout std_logic_vector(63 downto 0);
+    ddr3_dqs_p        : inout std_logic_vector(7 downto 0);
+    ddr3_dqs_n        : inout std_logic_vector(7 downto 0);
+    ddr3_addr         : out   std_logic_vector(13 downto 0);
+    ddr3_ba           : out   std_logic_vector(2 downto 0);
+    ddr3_ras_n        : out   std_logic;
+    ddr3_cas_n        : out   std_logic;
+    ddr3_we_n         : out   std_logic;
+    ddr3_reset_n      : out   std_logic;
+    ddr3_ck_p         : out   std_logic_vector(0 downto 0);
+    ddr3_ck_n         : out   std_logic_vector(0 downto 0);
+    ddr3_cke          : out   std_logic_vector(0 downto 0);
+    ddr3_cs_n         : out   std_logic_vector(0 downto 0);
+    ddr3_dm           : out   std_logic_vector(7 downto 0);
+    ddr3_odt          : out   std_logic_vector(0 downto 0);
+    ahbso             : out   ahb_slv_out_type;
+    ahbsi             : in    ahb_slv_in_type;
+    calib_done        : out   std_logic;
+    rst_n_syn         : in    std_logic;
+    rst_n_async       : in    std_logic;
+    clk_amba          : in    std_logic;
+    sys_clk_p         : in    std_logic;
+    sys_clk_n         : in    std_logic;
+    clk_ref_i         : in    std_logic;
+    ui_clk            : out   std_logic;
+    ui_clk_sync_rst   : out   std_logic
    );
 end component ;
 
-component edcl_ahbmst_emu is
-  generic (
-    hindex     : integer := 0
-  ); 
-  port (
-    clk    :  in  std_ulogic;
-    reset  :  in  std_ulogic;
-    ahbmo  :  out ahb_mst_out_type;
-    ahbmi  :  in  ahb_mst_in_type;
-    edcl_oen_ctrl  : out std_logic
-  );
-end component edcl_ahbmst_emu;
 
 -- constants
 signal vcc, gnd   : std_logic_vector(31 downto 0);
@@ -255,42 +154,6 @@ signal lock, calib_done, rst : std_ulogic;
 signal clkref  : std_logic;
 signal migrstn : std_logic;
 
--- AXI_SIM_RAM
-signal s_axi_awid 	: std_logic_vector(7 downto 0);
-signal s_axi_awaddr 	: std_logic_vector(31 downto 0);
-signal s_axi_awlen 	: std_logic_vector(7 downto 0);
-signal s_axi_awsize 	: std_logic_vector(2 downto 0);
-signal s_axi_awburst 	: std_logic_vector(1 downto 0);
-signal s_axi_awlock 	: std_logic;
-signal s_axi_awcache 	: std_logic_vector(3 downto 0);
-signal s_axi_awprot 	: std_logic_vector(2 downto 0);
-signal s_axi_awvalid 	: std_logic;
-signal s_axi_awready 	: std_logic;
-signal s_axi_wdata 	: std_logic_vector(31 downto 0);
-signal s_axi_wstrb 	: std_logic_vector(3 downto 0);
-signal s_axi_wlast 	: std_logic;
-signal s_axi_wvalid 	: std_logic;
-signal s_axi_wready 	: std_logic;
-signal s_axi_bid 	: std_logic_vector(7 downto 0);
-signal s_axi_bresp 	: std_logic_vector(1 downto 0);
-signal s_axi_bvalid 	: std_logic;
-signal s_axi_bready 	: std_logic;
-signal s_axi_arid 	: std_logic_vector(7 downto 0);
-signal s_axi_araddr 	: std_logic_vector(31 downto 0);
-signal s_axi_arlen 	: std_logic_vector(7 downto 0);
-signal s_axi_arsize 	: std_logic_vector(2 downto 0);
-signal s_axi_arburst 	: std_logic_vector(1 downto 0);
-signal s_axi_arlock 	: std_logic;
-signal s_axi_arcache 	: std_logic_vector(3 downto 0);
-signal s_axi_arprot 	: std_logic_vector(2 downto 0);
-signal s_axi_arvalid 	: std_logic;
-signal s_axi_arready 	: std_logic;
-signal s_axi_rid 	: std_logic_vector(7 downto 0);
-signal s_axi_rdata 	: std_logic_vector(31 downto 0);
-signal s_axi_rresp 	: std_logic_vector(1 downto 0);
-signal s_axi_rlast 	: std_logic;
-signal s_axi_rvalid 	: std_logic;
-signal s_axi_rready 	: std_logic;
 
 -- Tiles
 
@@ -440,12 +303,11 @@ begin
 
 
   gen_mig : if (SIMULATION /= true) generate
-	ddrc : axi2mig_7series
+    ddrc : ahb2mig_7series
       generic map (
-        hindex => CFG_AHB_JTAG,
-        haddr => 16#800#,
-        hmask => 16#f00#
-      )
+        hindex => 0,
+        haddr  => ddr_haddr(0),
+        hmask  => ddr_hmask(0))
       port map(
         ddr3_dq         => ddr3_dq,
         ddr3_dqs_p      => ddr3_dqs_p,
@@ -462,51 +324,17 @@ begin
         ddr3_cs_n       => ddr3_cs_n,
         ddr3_dm         => ddr3_dm,
         ddr3_odt        => ddr3_odt,
+        ahbsi           => ddr_ahbsi(0),
+        ahbso           => ddr_ahbso(0),
+        calib_done      => calib_done,
+        rst_n_syn       => migrstn,
+        rst_n_async     => rstraw,
+        clk_amba        => clkm,
         sys_clk_p       => sys_clk_p,
         sys_clk_n       => sys_clk_n,
         clk_ref_i       => clkref,
         ui_clk          => clkm,
-        ui_clk_sync_rst => open,
-        aresetn         => migrstn,
-        s_axi_awid0      => s_axi_awid,
-        s_axi_awaddr0    => s_axi_awaddr,
-        s_axi_awlen     => s_axi_awlen,
-        s_axi_awsize    => s_axi_awsize,
-        s_axi_awburst   => s_axi_awburst,
-        s_axi_awlock    => s_axi_awlock,
-        s_axi_awcache   => s_axi_awcache,
-        s_axi_awprot    => s_axi_awprot,
-        s_axi_awqos    => (others => '0'),
-        s_axi_awvalid   => s_axi_awvalid,
-        s_axi_awready   => s_axi_awready,
-        s_axi_wdata0     => s_axi_wdata,
-        s_axi_wstrb0     => s_axi_wstrb,
-        s_axi_wlast     => s_axi_wlast,
-        s_axi_wvalid    => s_axi_wvalid,
-        s_axi_wready    => s_axi_wready,
-        s_axi_bready    => s_axi_bready,
-        s_axi_bid0       => s_axi_bid,
-        s_axi_bresp     => s_axi_bresp,
-        s_axi_bvalid    => s_axi_bvalid,
-        s_axi_arid0      => s_axi_arid,
-        s_axi_araddr0    => s_axi_araddr,
-        s_axi_arlen     => s_axi_arlen,
-        s_axi_arsize    => s_axi_arsize,
-        s_axi_arburst   => s_axi_arburst,
-        s_axi_arlock    => s_axi_arlock,
-        s_axi_arcache   => s_axi_arcache,
-        s_axi_arprot    => s_axi_arprot,
-        s_axi_arqos    => (others => '0'),
-        s_axi_arvalid   => s_axi_arvalid,
-        s_axi_arready   => s_axi_arready,
-        s_axi_rready    => s_axi_rready,
-        s_axi_rid0       => s_axi_rid,
-        s_axi_rdata0     => s_axi_rdata,
-        s_axi_rresp     => s_axi_rresp,
-        s_axi_rlast     => s_axi_rlast,
-        s_axi_rvalid    => s_axi_rvalid,
-        calib_done      => calib_done,
-        rst_n_async     => rstraw
+        ui_clk_sync_rst => open
         );
 
   end generate gen_mig;
@@ -514,57 +342,22 @@ begin
   gen_mig_model : if (SIMULATION = true) generate
     -- pragma translate_off
 
-    mig_axiram : axi_ram_sim
+    mig_ahbram : ahbram_sim
       generic map (
-        DATA_WIDTH 	=> 32,
-        ADDR_WIDTH 	=> 32,
-        STRB_WIDTH 	=> 4,
-        ID_WIDTH   	=> 8,
-        PIPELINE_OUTPUT => 0
+        hindex => 0,
+        tech   => 0,
+        kbytes => 2 * 1024,
+        pipe   => 0,
+        maccsz => AHBDW,
+        fname  => "ram.srec"
         )
       port map(
-        clk 		=> clkm,
-        rst 		=> rstn,
-        -- AW Channel
-        s_axi_awid 	=> s_axi_awid,
-        s_axi_awaddr 	=> s_axi_awaddr,
-        s_axi_awlen	=> s_axi_awlen,
-        s_axi_awsize 	=> s_axi_awsize,
-        s_axi_awburst 	=> s_axi_awburst,
-        s_axi_awlock 	=> s_axi_awlock,
-        s_axi_awcache 	=> s_axi_awcache,
-        s_axi_awprot 	=> s_axi_awprot,
-        s_axi_awvalid 	=> s_axi_awvalid,
-        s_axi_awready 	=> s_axi_awready,
-        -- W Channel
-        s_axi_wdata 	=> s_axi_wdata,
-        s_axi_wstrb 	=> s_axi_wstrb,
-        s_axi_wlast 	=> s_axi_wlast,
-        s_axi_wvalid 	=> s_axi_wvalid,
-        s_axi_wready 	=> s_axi_wready,
-        -- B Channel
-        s_axi_bid	=> s_axi_bid,
-        s_axi_bresp 	=> s_axi_bresp,
-        s_axi_bvalid 	=> s_axi_bvalid,
-        s_axi_bready 	=> s_axi_bready,
-        -- AR Channel
-        s_axi_arid 	=> s_axi_arid,
-        s_axi_araddr 	=> s_axi_araddr,
-        s_axi_arlen 	=> s_axi_arlen,
-        s_axi_arsize 	=> s_axi_arsize,
-        s_axi_arburst 	=> s_axi_arburst,
-        s_axi_arlock 	=> s_axi_arlock,
-        s_axi_arcache 	=> s_axi_arcache,
-        s_axi_arprot 	=> s_axi_arprot,
-        s_axi_arvalid 	=> s_axi_arvalid,
-        s_axi_arready 	=> s_axi_arready,
-        -- R Channel
-        s_axi_rid 	=> s_axi_rid,
-        s_axi_rdata 	=> s_axi_rdata,
-        s_axi_rresp 	=> s_axi_rresp,
-        s_axi_rlast 	=> s_axi_rlast,
-        s_axi_rvalid 	=> s_axi_rvalid,
-        s_axi_rready 	=> s_axi_rready
+        rst     => rstn,
+        clk     => clkm,
+        haddr   => ddr_haddr(0),
+        hmask   => ddr_hmask(0),
+        ahbsi   => ddr_ahbsi(0),
+        ahbso   => ddr_ahbso(0)
         );
 
     ddr3_dq           <= (others => 'Z');
@@ -679,27 +472,16 @@ begin
 
   end generate;
 
-  no_eth0 : if SIMULATION = true and CFG_GRETH = 1 generate
+  no_eth0 : if SIMULATION = true or CFG_GRETH = 0 generate
     eth0_apbo <= apb_none;
     sgmii0_apbo <= apb_none;
     eth0_ahbmo <= ahbm_none;
-    --edcl_ahbmo <= ahbm_none;
+    edcl_ahbmo <= ahbm_none;
     txp <= '0';
     txn <= '1';
     emdc <= '0';
     erst <= '0';
     emdio <= '0';
-    
-    edcl_ahb_emu_i : edcl_ahbmst_emu
-    generic map(
-    	hindex => CFG_AHB_JTAG + 1
-    )
-    port map(
-    	clk => chip_refclk,
-    	reset => rstn,
-    	ahbmo => edcl_ahbmo,
-    	ahbmi => eth0_ahbmi
-    );
   end generate;
 
   -----------------------------------------------------------------------------
@@ -720,58 +502,19 @@ begin
       uart_ctsn      => uart_ctsn_int,
       uart_rtsn      => uart_rtsn_int,
       cpuerr         => cpuerr,
-      -- AW Channel
-      s_axi_awid 	=> s_axi_awid,
-      s_axi_awaddr 	=> s_axi_awaddr,
-      s_axi_awlen 	=> s_axi_awlen,
-      s_axi_awsize 	=> s_axi_awsize,
-      s_axi_awburst 	=> s_axi_awburst,
-      s_axi_awlock 	=> s_axi_awlock,
-      s_axi_awcache 	=> s_axi_awcache,
-      s_axi_awprot 	=> s_axi_awprot,
-      s_axi_awvalid 	=> s_axi_awvalid,
-      s_axi_awready 	=> s_axi_awready,
-      -- W Channel
-      s_axi_wdata 	=> s_axi_wdata,
-      s_axi_wstrb 	=> s_axi_wstrb,
-      s_axi_wlast 	=> s_axi_wlast,
-      s_axi_wvalid 	=> s_axi_wvalid,
-      s_axi_wready 	=> s_axi_wready,
-      -- B Channel
-      s_axi_bid 	=> s_axi_bid,
-      s_axi_bresp 	=> s_axi_bresp,
-      s_axi_bvalid 	=> s_axi_bvalid,
-      s_axi_bready 	=> s_axi_bready,
-      -- AR Channel
-      s_axi_arid 	=> s_axi_arid,
-      s_axi_araddr 	=> s_axi_araddr,
-      s_axi_arlen 	=> s_axi_arlen,
-      s_axi_arsize 	=> s_axi_arsize,
-      s_axi_arburst 	=> s_axi_arburst,
-      s_axi_arlock 	=> s_axi_arlock,
-      s_axi_arcache 	=> s_axi_arcache,
-      s_axi_arprot 	=> s_axi_arprot,
-      s_axi_arvalid 	=> s_axi_arvalid,
-      s_axi_arready 	=> s_axi_arready,
-      -- R Channel
-      s_axi_rid 	=> s_axi_rid,
-      s_axi_rdata 	=> s_axi_rdata,
-      s_axi_rresp 	=> s_axi_rresp,
-      s_axi_rlast 	=> s_axi_rlast,
-      s_axi_rvalid 	=> s_axi_rvalid,
-      s_axi_rready 	=> s_axi_rready,
-      -- END
-      eth0_ahbmi     	=> eth0_ahbmi,
-      eth0_ahbmo     	=> eth0_ahbmo,
-      edcl_ahbmo     	=> edcl_ahbmo,
-      eth0_apbi      	=> eth0_apbi,
-      eth0_apbo      	=> eth0_apbo,
-      sgmii0_apbi    	=> sgmii0_apbi,
-      sgmii0_apbo    	=> sgmii0_apbo,
-      dvi_apbi       	=> dvi_apbi,
-      dvi_apbo       	=> dvi_apbo,
-      dvi_ahbmi      	=> dvi_ahbmi,
-      dvi_ahbmo      	=> dvi_ahbmo);
+      ddr_ahbsi      => ddr_ahbsi,
+      ddr_ahbso      => ddr_ahbso,
+      eth0_ahbmi     => eth0_ahbmi,
+      eth0_ahbmo     => eth0_ahbmo,
+      edcl_ahbmo     => edcl_ahbmo,
+      eth0_apbi      => eth0_apbi,
+      eth0_apbo      => eth0_apbo,
+      sgmii0_apbi    => sgmii0_apbi,
+      sgmii0_apbo    => sgmii0_apbo,
+      dvi_apbi       => dvi_apbi,
+      dvi_apbo       => dvi_apbo,
+      dvi_ahbmi      => dvi_ahbmi,
+      dvi_ahbmo      => dvi_ahbmo);
 
  end;
 

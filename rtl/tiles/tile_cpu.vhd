@@ -477,9 +477,9 @@ begin
     end if;
   end process cpu_rstn_state_update;
 
- cpu_rstn_gen_sim: if SIMULATION = true and CFG_IOLINK_EN = 0 generate
+  cpu_rstn_gen_sim: if SIMULATION = true and CFG_IOLINK_EN = 0 generate
 
-    cpu_rstn_sim_fsm: process (cpu_rstn_state, cleanrstn, srst) is
+    cpu_rstn_sim_fsm: process (cpu_rstn_state, cleanrstn) is
     begin
       cpu_rstn_next <= cpu_rstn_state;
       cpurstn <= '0';
@@ -487,8 +487,7 @@ begin
       case cpu_rstn_state is
 
         when por =>
-          if srst = '1' then
-          --if cleanrstn = '1' then
+          if cleanrstn = '1' then
             cpu_rstn_next <= soft_reset_1_h;
           end if;
 
@@ -511,18 +510,10 @@ begin
           cpu_rstn_next <= soft_reset_4_h;
 
         when soft_reset_4_h =>
-          if srst = '0' then
-            cpu_rstn_next <= run;
-          end if;
-
-        --when soft_reset_4_h =>
-        --  cpu_rstn_next <= run;
+          cpu_rstn_next <= run;
 
         when run =>
           cpurstn <= '1';
-          if srst = '1' then
-            cpu_rstn_next <= soft_reset_1_h;
-          end if;
 
         when others =>
           cpu_rstn_next <= por;
