@@ -353,15 +353,15 @@ for d in $dirs; do
     fi
     
     if [[ "$FLOW" == "rtl" && "$d" != "hls" ]]; then
-	sed -i "s/<accelerator_name>/$LOWER/g" */*
-	sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" */*
-	sed -i "s/<acc_full_name>/$LOWERFULL/g" */*
-	sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" */*
+	sed -i "s/accelerator_name/$LOWER/g" */*
+	sed -i "s/ACCELERATOR_NAME/$UPPER/g" */*
+	sed -i "s/cc_full_name/$LOWERFULL/g" */*
+	sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" */*
     elif [ "$FLOW" != "rtl" ]; then
-	find . -type f -exec sed -i "s/<accelerator_name>/$LOWER/g" {} +
-	find . -type f -exec sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" {} +
-	find . -type f -exec sed -i "s/<acc_full_name>/$LOWERFULL/g" {} +
-	find . -type f -exec sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" {} +
+	find . -type f -exec sed -i "s/accelerator_name/$LOWER/g" {} +
+	find . -type f -exec sed -i "s/ACCELERATOR_NAME/$UPPER/g" {} +
+	find . -type f -exec sed -i "s/acc_full_name/$LOWERFULL/g" {} +
+	find . -type f -exec sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" {} +
     fi
 
 
@@ -468,18 +468,10 @@ indent="\ \ \ \ \ \ \ \ "
 
 if [ "$FLOW" == "catapult_hls" ]; then
     cd $ACC_DIR/hw/inc
-    sed -i "s/\/\* <<--nparam-->> \*\//$NPARAMS/g" ${LOWER}_conf_info.hpp
     for key in ${!values[@]}; do
-	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
-	sed -i "/\/\* <<--marsh-->> \*\//a ${indent}m &${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--ctor-->> \*\//a ${indent}this->${key} = ${values[$key]};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--ctor-args-->> \*\//a ${indent}int32_t ${key}${sep}" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--ctor-custom-->> \*\//a ${indent}this->${key} = ${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--sctrc-->> \*\//a ${indent}sc_trace(tf,v.${key}, NAME + \".${key}\");" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--eq-->> \*\//a ${indent}if (${key} != rhs.${key}) return false;" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--assign-->> \*\//a ${indent}${key} = other.${key};" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--print-->> \*\//a ${indent}os << \"${key}\ = \" << conf_info.${key} << \"${sep}\";" ${LOWER}_conf_info.hpp
-	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
+    	if [ $key == $(first_key) ]; then sep=""; else sep=", "; fi
+    	sed -i "/\/\* <<--params-->> \*\//a ${indent}int32_t ${key};" ${LOWER}_conf_info.hpp
+	sed -i "s/\/\* <<--params1-->> \*\//\/\* <<--params1-->> \*\/\n ${indent} ${key} ${sep} \\\\ /" ${LOWER}_conf_info.hpp
     done
 fi
 
@@ -739,10 +731,10 @@ for d in $dirs; do
 	rename acc_full $LOWERFULL *
     fi
 
-    sed -i "s/<accelerator_name>/$LOWER/g" *
-    sed -i "s/<ACCELERATOR_NAME>/$UPPER/g" *
-    sed -i "s/<acc_full_name>/$LOWERFULL/g" *
-    sed -i "s/<ACC_FULL_NAME>/$UPPERFULL/g" *
+    sed -i "s/accelerator_name/$LOWER/g" *
+    sed -i "s/ACCELERATOR_NAME/$UPPER/g" *
+    sed -i "s/acc_full_name/$LOWERFULL/g" *
+    sed -i "s/ACC_FULL_NAME/$UPPERFULL/g" *
 done
 
 ## Linux driver include file
@@ -767,7 +759,7 @@ for key in ${!values[@]}; do
 	sed -i "/\/\* <<--regs-->> \*\//a #define ${register_name} 0x${reg_offset_hex}" ${f}
     done
     sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}iowrite32be(a->${key}, esp->iomem + ${register_name});" linux/driver/${LOWERFULL}.c
-    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
+    sed -i "/\/\* <<--regs-config-->> \*\//a ${indent}${indent}${indent}iowrite32(dev, ${register_name}, ${key});" baremetal/${LOWER}.c
     user_reg_offset=$((user_reg_offset + 4))
 done
 

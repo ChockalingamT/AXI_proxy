@@ -32,6 +32,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
 use work.stdlib.all;
+use work.nocpackage.all;
 
 entity router is
   generic(
@@ -39,14 +40,15 @@ entity router is
     width        : integer                      := 34;
     depth        : integer                      := 4;
     ports        : std_logic_vector(4 downto 0) := "11111";
-    DEST_SIZE    : integer
+    DEST_SIZE    : integer;
+    QUEUE_SIZE   : integer
     );
   port(
     clk : in std_logic;
     rst : in std_logic;
 
-    CONST_localx : in std_logic_vector(2 downto 0);
-    CONST_localy : in std_logic_vector(2 downto 0);
+    CONST_localx : in std_logic_vector(YX_WIDTH-1 downto 0);
+    CONST_localy : in std_logic_vector(YX_WIDTH-1 downto 0);
 
     data_n_in : in std_logic_vector(width-1 downto 0);
     data_s_in : in std_logic_vector(width-1 downto 0);
@@ -76,14 +78,15 @@ architecture behavior of router is
       FlowControl : std_logic;
       Width       : integer;
       Ports       : std_logic_vector(4 downto 0);
-      DEST_SIZE   : integer
+      DEST_SIZE   : integer;
+      QUEUE_SIZE  : integer
       );
     port(
       clk : in std_logic;
       rst : in std_logic;
 
-      CONST_localx : in std_logic_vector(2 downto 0);
-      CONST_localy : in std_logic_vector(2 downto 0);
+      CONST_localx : in std_logic_vector(YX_WIDTH-1 downto 0);
+      CONST_localy : in std_logic_vector(YX_WIDTH-1 downto 0);
 
       data_n_in : in std_logic_vector(width-1 downto 0);
       data_s_in : in std_logic_vector(width-1 downto 0);
@@ -111,7 +114,8 @@ begin
       FlowControl => to_std_logic(flow_control),
       Width       => width,
       Ports       => Ports,
-      DEST_SIZE   => DEST_SIZE)
+      DEST_SIZE   => DEST_SIZE,
+      QUEUE_SIZE  => QUEUE_SIZE)
     port map (
       clk           => clk,
       rst           => rst,

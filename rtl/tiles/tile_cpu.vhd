@@ -38,7 +38,7 @@ use work.socmap.all;
 entity tile_cpu is
   generic (
     SIMULATION         : boolean              := false;
-    this_has_dco       : integer range 0 to 1 := 0);
+    this_has_dco       : integer range 0 to 2 := 0);
   port (
     raw_rstn           : in  std_ulogic;
     tile_rst           : in  std_ulogic;
@@ -107,6 +107,7 @@ architecture rtl of tile_cpu is
   signal tile_clk     : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal dco_clk_lock : std_ulogic;
+  signal dco_en_int   : std_ulogic;
 
   -- Monitor CPU idle
   signal irqo_int      : l3_irq_out_type;
@@ -308,20 +309,22 @@ architecture rtl of tile_cpu is
 begin
 
   -- DCO Reset synchronizer
-  rst_gen: if this_has_dco /= 0 generate
+  rst_gen: if this_has_dco = 1 generate
     tile_rstn_out : rstgen
       generic map (acthigh => 1, syncin => 0)
       port map (tile_rst, dco_clk, dco_clk_lock, rst, open);
   end generate rst_gen;
 
-  no_rst_gen: if this_has_dco = 0 generate
+  no_rst_gen: if this_has_dco /= 1 generate
     rst <= tile_rst;
   end generate no_rst_gen;
 
   tile_rstn_out <= rst;
 
   -- DCO
-  dco_gen: if this_has_dco /= 0 generate
+  dco_en_int <= dco_en and raw_rstn;
+
+  dco_gen: if this_has_dco = 1 generate
 
     dco_i: dco
       generic map (
@@ -332,7 +335,7 @@ begin
       port map (
         rstn     => raw_rstn,
         ext_clk  => ext_clk,
-        en       => dco_en,
+        en       => dco_en_int,
         clk_sel  => dco_clk_sel,
         cc_sel   => dco_cc_sel,
         fc_sel   => dco_fc_sel,
@@ -345,7 +348,7 @@ begin
     tile_clk <= dco_clk;
   end generate dco_gen;
 
-  no_dco_gen: if this_has_dco = 0 generate
+  no_dco_gen: if this_has_dco /= 1 generate
     dco_clk_lock <= '1';
     tile_clk <= ext_clk;
     clk_div <= ext_clk;

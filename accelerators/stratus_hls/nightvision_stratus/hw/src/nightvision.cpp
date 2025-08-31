@@ -56,7 +56,7 @@ void nightvision::load_input()
         for (uint16_t b = 0; b < n_Rows; b++) {
 
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD, 0);
             this->dma_read_ctrl.put(dma_info);
 
             for (uint32_t i = plm_addr; i < (plm_addr + n_Cols); i += WORDS_PER_DMA) {
@@ -69,7 +69,8 @@ void nightvision::load_input()
                     HLS_UNROLL_SIMPLE;
                     // Write to PLM
                     mem_buff_1[i + k] =
-                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG).to_uint();
+                        data.range(((k + 1) << MAX_PXL_WIDTH_LOG) - 1, k << MAX_PXL_WIDTH_LOG)
+                            .to_uint();
                     mem_buff_2[i + k] = 0;
                 }
             }
@@ -132,7 +133,7 @@ void nightvision::store_output()
         uint32_t plm_addr = 0;
         for (uint16_t b = 0; b < n_Rows; b++) {
             // Configure DMA transaction
-            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD);
+            dma_info_t dma_info(dma_addr, n_Cols / WORDS_PER_DMA, SIZE_HWORD, 0);
 
             this->dma_write_ctrl.put(dma_info);
 
@@ -169,7 +170,7 @@ void nightvision::compute_kernel()
     uint32_t n_Cols;
     uint32_t plm_size;
     uint32_t index_last_row;
-    bool     do_dwt;
+    bool do_dwt;
 
     // Reset
     {
@@ -209,8 +210,7 @@ void nightvision::compute_kernel()
         kernel_nf(n_Rows, n_Cols);
         kernel_hist(n_Rows, n_Cols);
         kernel_histEq(n_Rows, n_Cols);
-        if (do_dwt)
-            kernel_dwt(n_Rows, n_Cols);
+        if (do_dwt) kernel_dwt(n_Rows, n_Cols);
 
         this->compute_store_handshake();
     }

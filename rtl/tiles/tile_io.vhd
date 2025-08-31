@@ -59,13 +59,6 @@ entity tile_io is
     dco_cc_sel         : in std_logic_vector(5 downto 0);
     dco_clk_sel        : in std_ulogic;
     dco_en             : in std_ulogic;  
-    -- NoC DCO config
-    dco_noc_freq_sel   : in std_logic_vector(1 downto 0);
-    dco_noc_div_sel    : in std_logic_vector(2 downto 0);
-    dco_noc_fc_sel     : in std_logic_vector(5 downto 0);
-    dco_noc_cc_sel     : in std_logic_vector(5 downto 0);
-    dco_noc_clk_sel    : in std_ulogic;
-    dco_noc_en         : in std_ulogic;  
     -- I/O bus interfaces
     eth0_apbi          : out apb_slv_in_type;
     eth0_apbo          : in  apb_slv_out_type;
@@ -82,6 +75,7 @@ entity tile_io is
     uart_txd           : out std_ulogic;
     uart_ctsn          : in  std_ulogic;
     uart_rtsn          : out std_ulogic;
+    mdcscaler          : out std_logic_vector(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
     -- I/O link
     iolink_data_oen   : out std_logic;
     iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
@@ -145,6 +139,15 @@ architecture rtl of tile_io is
   signal dco_clk_lock : std_ulogic;
   signal dco_clk      : std_ulogic;
   signal noc_clk_out_int : std_ulogic;
+  signal dco_en_int   : std_ulogic;
+
+  -- NoC DCO config
+  signal dco_noc_en       : std_ulogic;
+  signal dco_noc_clk_sel  : std_ulogic;
+  signal dco_noc_cc_sel   : std_logic_vector(5 downto 0);
+  signal dco_noc_fc_sel   : std_logic_vector(5 downto 0);
+  signal dco_noc_div_sel  : std_logic_vector(2 downto 0);
+  signal dco_noc_freq_sel : std_logic_vector(1 downto 0);
 
   -- Bootrom
   component ahbrom is
@@ -305,7 +308,7 @@ architecture rtl of tile_io is
   signal header, header_next : std_logic_vector(MISC_NOC_FLIT_SIZE - 1 downto 0);
 
   -- Tile parameters
-  signal tile_config : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
+  signal tile_config_int : std_logic_vector(ESP_CSR_WIDTH - 1 downto 0);
 
   constant this_local_y           : local_yx                           := tile_y(io_tile_id);
   constant this_local_x           : local_yx                           := tile_x(io_tile_id);
@@ -318,16 +321,16 @@ architecture rtl of tile_io is
     2      => '1',                                  -- irq3mp / plic
     3      => '1',                                  -- gptimer
     4      => '1',                                  -- esplink
-    13     => to_std_logic(CFG_SVGA_ENABLE),        -- svga
-    14     => to_std_logic(CFG_GRETH),              -- eth mac
-    15     => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
+    5      => to_std_logic(CFG_SVGA_ENABLE),        -- svga
+    6      => to_std_logic(CFG_GRETH),              -- eth mac
+    7      => to_std_logic(CFG_SGMII * CFG_GRETH),  -- eth phy
     others => '0');
 
   constant this_local_ahb_en : std_logic_vector(0 to NAHBSLV - 1) := (
     0      => '1',                            -- bootrom
     1      => '1',                            -- ahb2apb
     2      => to_std_logic(GLOB_CPU_RISCV * GLOB_CPU_AXI),  -- risc-v clint
-    12     => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
+    3      => to_std_logic(CFG_SVGA_ENABLE),  -- frame buffer
     others => '0');
 
   constant this_remote_apb_slv_en : std_logic_vector(0 to NAPBSLV - 1) := remote_apb_slv_mask_misc;
@@ -398,7 +401,16 @@ begin
 
   tile_rstn_out <= rst;
 
+  dco_noc_freq_sel <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 0  downto ESP_CSR_DCO_NOC_CFG_MSB - 0  - 1);
+  dco_noc_div_sel  <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 2  downto ESP_CSR_DCO_NOC_CFG_MSB - 2  - 2);
+  dco_noc_fc_sel   <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 5  downto ESP_CSR_DCO_NOC_CFG_MSB - 5  - 5);
+  dco_noc_cc_sel   <= tile_config_int(ESP_CSR_DCO_NOC_CFG_MSB - 11 downto ESP_CSR_DCO_NOC_CFG_MSB - 11 - 5);
+  dco_noc_clk_sel  <= tile_config_int(ESP_CSR_DCO_NOC_CFG_LSB + 1);
+  dco_noc_en       <= raw_rstn and tile_config_int(ESP_CSR_DCO_NOC_CFG_LSB);
+
   -- DCO
+  dco_en_int <= dco_en and raw_rstn;
+
   dco_gen: if this_has_dco /= 0 generate
     dco_noc_i : dco
       generic map (
@@ -431,7 +443,7 @@ begin
         port map (
           rstn     => raw_rstn,
           ext_clk  => ext_clk,
-          en       => dco_en,
+          en       => dco_en_int,
           clk_sel  => dco_clk_sel,
           cc_sel   => dco_cc_sel,
           fc_sel   => dco_fc_sel,
@@ -508,14 +520,11 @@ begin
 
   -- NB: all local I/O-bus slaves are accessed through proxy as if they were
   -- remote. This allows any master in the system to access them
-  no_pslv_gen_1 : for i in 5 to 12 generate
-    noc_apbo(i) <= apb_none;
-  end generate no_pslv_gen_1;
-  no_pslv_gen_2 : for i in 16 to NAPBSLV - 1 generate
+  no_pslv_gen : for i in 8 to NAPBSLV - 1 generate
     skip_csr_apb_gen : if i /= this_csr_pindex generate
       noc_apbo(i) <= apb_none;
     end generate skip_csr_apb_gen;
-  end generate no_pslv_gen_2;
+  end generate no_pslv_gen;
 
   -----------------------------------------------------------------------------
   -- Self configuration
@@ -538,15 +547,17 @@ begin
   -- ETH0 and EDCL Master
   -----------------------------------------------------------------------------
 
+  mdcscaler <= tile_config_int(ESP_CSR_MDC_SCALER_CFG_MSB downto ESP_CSR_MDC_SCALER_CFG_LSB);
+
   onchip_ethernet : if CFG_ETH_EN = 1 and CFG_GRETH = 1 generate
     ahbmo(0)   <= eth0_ahbmo;
     eth0_ahbmi <= ahbmi;
 
-    noc_apbo(14) <= eth0_apbo;
+    noc_apbo(6) <= eth0_apbo;
     eth0_apbi    <= noc_apbi;
 
     sgmii_gen : if CFG_SGMII = 1 generate
-      noc_apbo(15) <= sgmii0_apbo;
+      noc_apbo(7) <= sgmii0_apbo;
       sgmii0_apbi  <= noc_apbi;
     end generate sgmii_gen;
 
@@ -564,12 +575,12 @@ begin
   no_ethernet : if CFG_ETH_EN = 0 or CFG_GRETH = 0 generate
     eth0_ahbmi   <= ahbm_in_none;
     eth0_apbi    <= apb_slv_in_none;
-    noc_apbo(14) <= apb_none;
+    noc_apbo(6) <= apb_none;
   end generate no_ethernet;
 
   no_sgmii_gen : if CFG_ETH_EN = 0 or CFG_GRETH = 0 or CFG_SGMII = 0 generate
     sgmii0_apbi  <= apb_slv_in_none;
-    noc_apbo(15) <= apb_none;
+    noc_apbo(7) <= apb_none;
   end generate no_sgmii_gen;
 
   iolink_en: if CFG_IOLINK_EN = 1 generate
@@ -798,8 +809,8 @@ begin
               noc_apbi_wirq.pwrite = '1' and noc_apbi_wirq.paddr(11 downto 0) = x"004" and
               noc_apbi_wirq.paddr(31 downto 16) = x"0c20" and irq_pwdata_hit = '1') then
 
-            header_reg := create_header(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
-                                        INTERRUPT, X"00");
+            header_reg := create_header_misc(MISC_NOC_FLIT_SIZE, this_local_y, this_local_x, dest_y, dest_x,
+                                        INTERRUPT, (others => '0'));
             header_reg(MISC_NOC_FLIT_SIZE - 1 downto
                        MISC_NOC_FLIT_SIZE - PREAMBLE_WIDTH) := PREAMBLE_1FLIT;
 
@@ -912,12 +923,12 @@ begin
   noc_apbo(4).pindex <= 4;
 
   -----------------------------------------------------------------------------
-  -- APB 13: DVI
+  -- APB 5: DVI
   -----------------------------------------------------------------------------
 
   -- SVGA component interface
   svga_on_apb : if CFG_SVGA_ENABLE /= 0 generate
-    noc_apbo(13) <= dvi_apbo;
+    noc_apbo(5) <= dvi_apbo;
     ahbmo2(0)    <= dvi_ahbmo;
 
     -- Dedicated Video Memory with dual-port interface.
@@ -954,7 +965,7 @@ begin
   end generate svga_on_apb;
 
   no_svga_on_apb : if CFG_SVGA_ENABLE = 0 generate
-    noc_apbo(13) <= apb_none;
+    noc_apbo(5) <= apb_none;
     ahbmo2(0) <= ahbm_none;
   end generate no_svga_on_apb;
 
@@ -1124,10 +1135,10 @@ begin
   -- CPU (rather than CPU0 only) to boot in single-core mode.
   -- Default CPU ID and routing tables are defined as constants in the generated
   -- socmap, which is based on the ESP configuration file.
-  override_cpu_loc <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB);
+  override_cpu_loc <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB);
   cpu_loc_ovr_gen: for i in 0 to CFG_NCPU_TILE - 1 generate
-    cpu_loc_x(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 0);
-    cpu_loc_y(i) <= tile_config(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3 + 2 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * 6 + 3);
+    cpu_loc_x(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0 + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + 0);
+    cpu_loc_y(i) <= tile_config_int(ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH + YX_WIDTH - 1 downto ESP_CSR_CPU_LOC_OVR_LSB + 1 + i * YX_WIDTH * 2 + YX_WIDTH);
   end generate cpu_loc_ovr_gen;
 
   intreq2noc_1 : intreq2noc
@@ -1245,7 +1256,7 @@ begin
       mon_llc => monitor_cache_none,
       mon_acc => monitor_acc_none,
       mon_dvfs => mon_dvfs_int,
-      tile_config => tile_config,
+      tile_config => tile_config_int,
       srst => open,
       tp_acc_rst => open,
       apbi => noc_apbi,

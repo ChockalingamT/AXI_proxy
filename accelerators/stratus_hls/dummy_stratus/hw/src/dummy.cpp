@@ -22,10 +22,10 @@ void dummy::load_input()
         wait();
     }
 
-
     // Config
     uint32_t tokens;
     uint32_t batch;
+    uint32_t source;
     {
         HLS_PROTO("load-config");
 
@@ -33,22 +33,24 @@ void dummy::load_input()
         conf_info_t config = this->conf_info.read();
 
         tokens = config.tokens;
-        batch = config.batch;
+        batch  = config.batch;
+        source = config.source;
     }
 
     // Load
-    bool ping = true;
+    bool ping       = true;
     uint32_t offset = 0;
     for (int n = 0; n < batch; n++)
-        for (int b = tokens; b > 0; b -= PLM_SIZE)
-        {
+        for (int b = tokens; b > 0; b -= PLM_SIZE) {
             HLS_PROTO("load-dma");
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE,
+                                source);
 #else
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE,
+                                source);
 #endif
             offset += len;
 
@@ -57,11 +59,11 @@ void dummy::load_input()
             for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
                 sc_dt::sc_bv<64> data_bv;
                 for (uint16_t k = 0; k < DMA_BEAT_PER_WORD; k++) {
-                    data_bv.range((k+1)*DMA_WIDTH-1, k * DMA_WIDTH) = this->dma_read_chnl.get();
+                    data_bv.range((k + 1) * DMA_WIDTH - 1, k * DMA_WIDTH) =
+                        this->dma_read_chnl.get();
                     wait();
                 }
-                if (ping)
-                    plm0[i] = data_bv.to_int64();
+                if (ping) plm0[i] = data_bv.to_int64();
                 else
                     plm1[i] = data_bv.to_int64();
             }
@@ -73,15 +75,13 @@ void dummy::load_input()
                 uint64_t data;
                 sc_dt::sc_bv<DMA_WIDTH> data_bv;
 
-
                 data_bv = this->dma_read_chnl.get();
                 wait();
                 for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++) {
                     HLS_UNROLL_SIMPLE;
-                    if (ping)
-                        plm0[i+k] = data_bv.range((k+1)*64 - 1, k*64).to_int64();
+                    if (ping) plm0[i + k] = data_bv.range((k + 1) * 64 - 1, k * 64).to_int64();
                     else
-                        plm1[i+k] = data_bv.range((k+1)*64 - 1, k*64).to_int64();
+                        plm1[i + k] = data_bv.range((k + 1) * 64 - 1, k * 64).to_int64();
                 }
             }
 #endif
@@ -94,8 +94,6 @@ void dummy::load_input()
         this->process_done();
     }
 }
-
-
 
 void dummy::store_output()
 {
@@ -111,6 +109,7 @@ void dummy::store_output()
     // Config
     uint32_t tokens;
     uint32_t batch;
+    uint32_t ndests;
     {
         HLS_PROTO("store-config");
 
@@ -118,23 +117,25 @@ void dummy::store_output()
         conf_info_t config = this->conf_info.read();
 
         tokens = config.tokens;
-        batch = config.batch;
+        batch  = config.batch;
+        ndests = config.ndests;
     }
 
     // Store
-    bool ping = true;
+    bool ping       = true;
     uint32_t offset = 0;
     for (int n = 0; n < batch; n++)
-        for (int b = tokens; b > 0; b -= PLM_SIZE)
-        {
+        for (int b = tokens; b > 0; b -= PLM_SIZE) {
             HLS_PROTO("store-dma");
             this->store_compute_handshake();
 
             uint32_t len = b > PLM_SIZE ? PLM_SIZE : b;
 #if (DMA_WORD_PER_BEAT == 0)
-            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE);
+            dma_info_t dma_info(offset * DMA_BEAT_PER_WORD, len * DMA_BEAT_PER_WORD, DMA_SIZE,
+                                ndests);
 #else
-            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE);
+            dma_info_t dma_info(offset / DMA_WORD_PER_BEAT, len / DMA_WORD_PER_BEAT, DMA_SIZE,
+                                ndests);
 #endif
             offset += len;
 
@@ -143,15 +144,14 @@ void dummy::store_output()
             for (uint16_t i = 0; i < len; i += DMA_WORD_PER_BEAT) {
                 sc_dt::sc_int<64> data;
                 wait();
-                if (ping)
-                    data = plm0[i];
+                if (ping) data = plm0[i];
                 else
                     data = plm1[i];
 
                 sc_dt::sc_bv<DMA_WIDTH> data_bv(data);
 
                 for (uint16_t k = 0; k < DMA_BEAT_PER_WORD; k++) {
-                    this->dma_write_chnl.put(data_bv.range((k+1)*DMA_WIDTH - 1, k*DMA_WIDTH));
+                    this->dma_write_chnl.put(data_bv.range((k + 1) * DMA_WIDTH - 1, k * DMA_WIDTH));
                     wait();
                 }
             }
@@ -161,10 +161,9 @@ void dummy::store_output()
                 wait();
                 for (uint16_t k = 0; k < DMA_WORD_PER_BEAT; k++) {
                     HLS_UNROLL_SIMPLE;
-                    if (ping)
-                        data_bv.range((k+1)*64 - 1, k*64) = plm0[i + k];
+                    if (ping) data_bv.range((k + 1) * 64 - 1, k * 64) = plm0[i + k];
                     else
-                        data_bv.range((k+1)*64 - 1, k*64) = plm1[i + k];
+                        data_bv.range((k + 1) * 64 - 1, k * 64) = plm1[i + k];
                 }
                 this->dma_write_chnl.put(data_bv);
             }
@@ -178,7 +177,6 @@ void dummy::store_output()
         this->process_done();
     }
 }
-
 
 void dummy::compute_kernel()
 {
@@ -198,7 +196,6 @@ void dummy::compute_kernel()
         cfg.wait_for_config(); // config process
         conf_info_t config = this->conf_info.read();
     }
-
 
     // Compute (dummy does nothing)
     while (true) {

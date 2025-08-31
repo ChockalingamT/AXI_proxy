@@ -59,6 +59,7 @@ entity esp_acc_dma is
     rdonly_reg_mask    : std_logic_vector(0 to MAXREGNUM - 1) := (others => '0');
     exp_registers      : integer range 0 to 1                 := 0;  -- Not implemented
     scatter_gather     : integer range 0 to 1                 := 1;
+    has_l2             : integer range 0 to 1                 := 1;
     tlb_entries        : integer                              := 256);
   port (
     rst           : in  std_ulogic;
@@ -80,6 +81,7 @@ entity esp_acc_dma is
     rd_index      : in  std_logic_vector(31 downto 0);
     rd_length     : in  std_logic_vector(31 downto 0);
     rd_size       : in  std_logic_vector(2 downto 0);
+    rd_source     : in  std_logic_vector(5 downto 0);
     rd_grant      : out std_ulogic;
     bufdin_ready  : in  std_ulogic;
     bufdin_data   : out std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -88,6 +90,7 @@ entity esp_acc_dma is
     wr_index      : in  std_logic_vector(31 downto 0);
     wr_length     : in  std_logic_vector(31 downto 0);
     wr_size       : in  std_logic_vector(2 downto 0);
+    wr_ndests     : in  std_logic_vector(5 downto 0);
     wr_grant      : out std_ulogic;
     bufdout_ready : out std_ulogic;
     bufdout_data  : in  std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -146,6 +149,8 @@ architecture rtl of esp_acc_dma is
   constant dma_word_bits : integer := ncpu_log(dma_words);
   constant dma_word_pad : std_logic_vector(dma_word_bits - 1 downto 0) := (others => '0');
 
+  constant YX_REG_ENTRIES : integer := 36;
+
   -- Fix endianness
   function fix_endian (
     din : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -190,9 +195,10 @@ architecture rtl of esp_acc_dma is
 
   -- Coherence
   signal coherence : integer range 0 to ACC_COH_FULL;
+  signal coherence_tmp : integer range 0 to ACC_COH_FULL;
 
   -- P2P
-  signal p2p_src_index_r      : integer range 0 to 3;
+  signal p2p_src_index_r      : integer range 0 to 2;
   signal p2p_src_index_inc    : std_ulogic;
   signal p2p_dst_y            : local_yx;
   signal p2p_dst_x            : local_yx;
@@ -206,6 +212,13 @@ architecture rtl of esp_acc_dma is
   signal p2p_dst_arr_y        : yx_vec(MAX_MCAST_DESTS - 1 downto 0);
   signal count_n_dest         : integer range 0 to MAX_MCAST_DESTS - 1;
   signal p2p_mcast_ndests     : integer range 0 to MAX_MCAST_DESTS - 1;
+  signal p2p_load             : std_ulogic;
+  signal p2p_store            : std_ulogic;
+
+  -- MCAST PACKET
+  signal p2p_mcast_packet     : std_ulogic;
+  signal p2p_mcast_packet_size: integer range 0 to 15;
+  signal p2p_mcast_depth      : std_logic_vector(3 downto 0);
 
   -- IRQ
   signal irq      : std_ulogic;
@@ -218,10 +231,11 @@ architecture rtl of esp_acc_dma is
   signal payload_address, payload_address_r  : dma_noc_flit_type;
   signal payload_length, payload_length_r    : dma_noc_flit_type;
   signal sample_flits                        : std_ulogic;
-  signal sample_rd_size, sample_wr_size      : std_ulogic;
+  signal sample_rd, sample_wr                : std_ulogic;
+  signal source_r                            : integer range 0 to YX_REG_ENTRIES - 1;
   signal size_r                              : std_logic_vector(2 downto 0);
   signal irq_header_i, irq_header            : misc_noc_flit_type;
-  signal irq_info                            : std_logic_vector(RESERVED_WIDTH - 1 downto 0);
+  signal irq_info                            : std_logic_vector(RESERVED_WIDTH_MISC - 1 downto 0);
 
   -- DMA
   type dma_fsm is (idle, request_header, request_address, request_length,
@@ -247,12 +261,15 @@ architecture rtl of esp_acc_dma is
 
   -- DMA word count
   signal burst_count            : std_logic_vector(31 downto 0);
+  signal burst_count_mcast      : std_logic_vector(3  downto 0);
   signal tlb_count              : std_logic_vector(31 downto 0);
   signal word_count             : std_logic_vector(31 downto 0);
   signal increment_burst_count  : std_ulogic;
+  signal increment_burst_count_mcast : std_ulogic;
   signal increment_tlb_count    : std_ulogic;
   signal increment_word_count   : std_ulogic;
   signal clear_burst_count      : std_ulogic;
+  signal clear_burst_count_mcast : std_ulogic;
   signal clear_tlb_count        : std_ulogic;
   signal clear_word_count       : std_ulogic;
   signal set_word_count         : std_ulogic;
@@ -361,8 +378,8 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- IRQ packet
   -----------------------------------------------------------------------------
-  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH);
-  irq_header_i <= create_header(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
+  irq_info <= conv_std_logic_vector(pirq, RESERVED_WIDTH_MISC);
+  irq_header_i <= create_header_misc(MISC_NOC_FLIT_SIZE, local_y, local_x, io_y, io_x, INTERRUPT, irq_info)(MISC_NOC_FLIT_SIZE - 1 downto 0);
   irq_header(MISC_NOC_FLIT_SIZE-1 downto MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH) <= PREAMBLE_1FLIT;
   irq_header(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0) <=
     irq_header_i(MISC_NOC_FLIT_SIZE-PREAMBLE_WIDTH-1 downto 0);
@@ -387,6 +404,8 @@ begin  -- rtl
         wr_request           => wr_request,
         wr_index             => wr_index,
         wr_length            => wr_length,
+        src_is_p2p           => p2p_load,
+        dst_is_p2p           => p2p_store,
         dma_tran_start       => dma_tran_start,
         dma_tran_header_sent => dma_tran_header_sent,
         dma_tran_done        => dma_tran_done,
@@ -419,14 +438,22 @@ begin  -- rtl
   -----------------------------------------------------------------------------
   -- DMA packet
   -----------------------------------------------------------------------------
-  coherence <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+  coherence_tmp <= conv_integer(bankreg(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
 
   coherence_model_select: process (bankreg, dma_rcv_rdreq_int, dma_rcv_data_out, dma_rcv_empty,
                                    dma_snd_wrreq_int, dma_snd_data_in_int, dma_snd_full,
                                    llc_coherent_dma_rcv_data_out, llc_coherent_dma_rcv_empty,
                                    llc_coherent_dma_snd_full, p2p_req_rcv_rdreq,
-                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence) is
+                                   p2p_rsp_snd_wrreq, p2p_rsp_snd_data_in, coherence_tmp) is
   begin  -- process coherence_model_select
+
+    if CFG_LLC_ENABLE = 0 then
+      coherence <= ACC_COH_NONE;
+    elsif has_l2 = 0 and coherence_tmp = ACC_COH_FULL then
+      coherence <= ACC_COH_RECALL;
+    else
+      coherence <= coherence_tmp;
+    end if;
 
     if coherence = ACC_COH_LLC or coherence = ACC_COH_RECALL then
       -- P2P requests (1 flit each) share the LLC-coherent DMA queues in output
@@ -471,11 +498,13 @@ begin  -- rtl
 
   p2p_dst_y <= get_origin_y(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
   p2p_dst_x <= get_origin_x(DMA_NOC_FLIT_SIZE, dma_noc_flit_pad & p2p_req_rcv_data_out);
-  p2p_mcast_ndests <= to_integer(unsigned(bankreg(P2P_REG)(P2P_BIT_MCAST_DESTS + P2P_WIDTH_MCAST_DESTS - 1 downto P2P_BIT_MCAST_DESTS)));
+  p2p_mcast_packet <= bankreg(MCAST_REG)(MCAST_BIT_PACKET);
+  p2p_mcast_packet_size <= to_integer(unsigned(bankreg(MCAST_REG)(MCAST_BIT_PACKET_SIZE + MCAST_WIDTH_PACKET_SIZE - 1 downto MCAST_BIT_PACKET_SIZE)));
+  p2p_mcast_depth <= conv_std_logic_vector(p2p_mcast_packet_size, 4);
 
   make_packet: process (bankreg, pending_dma_write, tlb_empty, dma_address, dma_length,
                         p2p_src_index_r, p2p_dst_arr_y, p2p_dst_arr_x, p2p_dst_y, p2p_dst_x,
-                        coherence, local_y, local_x, dma_tran_done)
+                        coherence, local_y, local_x, dma_tran_done, source_r)
     variable msg_type : noc_msg_type;
     variable header_v : dma_noc_flit_type;
     variable tmp : std_logic_vector(63 downto 0);
@@ -512,7 +541,7 @@ begin  -- rtl
       -- accelerator write burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+      if p2p_store = '1' then
         msg_type := RSP_P2P;
         is_p2p := '1';
       else
@@ -526,7 +555,7 @@ begin  -- rtl
       -- accelerator read burst
       address := dma_address;
       length  := len_pad & dma_length(31 downto GLOB_BYTE_OFFSET_BITS);
-      if bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P) = '1' then
+      if p2p_load = '1' then
         msg_type := REQ_P2P;
         is_p2p := '1';
       else
@@ -550,8 +579,13 @@ begin  -- rtl
       end loop;  -- i
     end if;
 
-    p2p_src_y := bankreg(P2P_REG)(9 + 6 * p2p_src_index_r downto 7 + 6 * p2p_src_index_r);
-    p2p_src_x := bankreg(P2P_REG)(6 + 6 * p2p_src_index_r downto 4 + 6 * p2p_src_index_r);
+    if source_r /= 0 then
+      p2p_src_y := bankreg(YX_REG + source_r / 4)(2 * YX_WIDTH - 1 + 2 * YX_WIDTH * (source_r mod 4) downto YX_WIDTH + 2 * YX_WIDTH * (source_r mod 4));
+      p2p_src_x := bankreg(YX_REG + source_r / 4)(YX_WIDTH - 1 + 2 * YX_WIDTH * (source_r mod 4) downto 2 * YX_WIDTH * (source_r mod 4));
+    else
+      p2p_src_y := bankreg(P2P_REG)(P2P_BIT_SRCS_YX + 2 * YX_WIDTH - 1 + 2 * YX_WIDTH * p2p_src_index_r downto P2P_BIT_SRCS_YX + YX_WIDTH + 2 * YX_WIDTH * p2p_src_index_r);
+      p2p_src_x := bankreg(P2P_REG)(P2P_BIT_SRCS_YX + YX_WIDTH - 1 + 2 * YX_WIDTH * p2p_src_index_r downto P2P_BIT_SRCS_YX + 2 * YX_WIDTH * p2p_src_index_r);
+    end if;
 
     if msg_type = REQ_P2P then
       p2p_header_v := create_header(DMA_NOC_FLIT_SIZE, local_y, local_x, p2p_src_y, p2p_src_x, msg_type, hprot);
@@ -591,11 +625,16 @@ begin  -- rtl
       payload_address_r <= (others => '0');
       payload_length_r <= (others => '0');
       burst_count <= conv_std_logic_vector(1, 32);
+      burst_count_mcast <= (others => '0');
       p2p_count <= conv_std_logic_vector(1, 32);
       size_r <= HSIZE_WORD;
       p2p_src_index_r <= 0;
       tlb_count <= (others => '0');
       word_count <= (others => '0');
+      p2p_mcast_ndests <= 0;
+      p2p_store <= '0';
+      p2p_load <= '0';
+      source_r <= 0;
     elsif clk'event and clk = '1' then  -- rising clock edge
       if sample_flits = '1' then
         header_r <= header;
@@ -611,6 +650,12 @@ begin  -- rtl
       end if;
       if clear_burst_count = '1' then
         burst_count <= conv_std_logic_vector(1, 32);
+      end if;
+      if increment_burst_count_mcast = '1' then
+        burst_count_mcast <= burst_count_mcast + 1;
+      end if;
+      if clear_burst_count_mcast = '1' then
+        burst_count_mcast <= (others => '0');
       end if;
       if increment_tlb_count = '1' then
         tlb_count <= tlb_count + 1;
@@ -635,16 +680,29 @@ begin  -- rtl
       if clear_p2p_count = '1' then
         p2p_count <= conv_std_logic_vector(1, 32);
       end if;
-      if sample_rd_size = '1' then
+      if sample_rd = '1' then
         size_r <= rd_size;
-      elsif sample_wr_size = '1' then
+        source_r <= to_integer(unsigned(rd_source));
+        if rd_source = conv_std_logic_vector(0, 6) then
+          p2p_load <= bankreg(P2P_REG)(P2P_BIT_SRC_IS_P2P);
+        else
+          p2p_load <= '1';
+        end if;
+      elsif sample_wr   = '1' then
         size_r <= wr_size;
+        if wr_ndests = conv_std_logic_vector(0, 6) then
+          p2p_mcast_ndests <= to_integer(unsigned(bankreg(MCAST_REG)(MCAST_BIT_DESTS + MCAST_WIDTH_DESTS - 1 downto MCAST_BIT_DESTS)));
+          p2p_store <= bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P);
+        else
+          p2p_mcast_ndests <= to_integer(unsigned(wr_ndests)) - 1;
+          p2p_store <= '1';
+        end if;
       end if;
       if p2p_src_index_inc = '1' then
         if p2p_src_index_r = conv_integer(bankreg(P2P_REG)(P2P_BIT_NSRCS + P2P_WIDTH_NSRCS - 1 downto P2P_BIT_NSRCS)) then
           p2p_src_index_r <= 0;
         else
-          p2p_src_index_r <= p2p_src_index_r + 1;
+          p2p_src_index_r <= p2p_src_index_r + 1 mod 3;
         end if;
       end if;
     end if;
@@ -701,10 +759,10 @@ begin  -- rtl
 
     dma_next <= dma_state;
     sample_flits <= '0';
-    sample_rd_size <= '0';
-    sample_wr_size <= '0';
     increment_burst_count <= '0';
     clear_burst_count <= '0';
+    sample_rd <= '0';
+    sample_wr <= '0';
     increment_tlb_count <= '0';
     increment_word_count <= '0';
     clear_tlb_count <= '0';
@@ -713,6 +771,11 @@ begin  -- rtl
     word_count_int := to_integer(unsigned(word_count));
     increment_p2p_count <= '0';
     clear_p2p_count <= '0';
+
+    -- MCAST PACKET
+    clear_burst_count_mcast <= '0';
+    increment_burst_count_mcast <= '0';
+
     --TLB
     tlb_wr_address_next := tlb_count;
     tlb_wr_address <= tlb_wr_address_next(log2xx(tlb_entries) - 1 downto 0);
@@ -746,7 +809,7 @@ begin  -- rtl
     else
       len := payload_length_r(31 downto 0);
     end if;
-    if burst_count = len or burst_count = rcv_p2p_length then
+    if burst_count = len or burst_count = rcv_p2p_length or ((burst_count_mcast = p2p_mcast_depth) and (p2p_mcast_packet = '1') and (msg = RSP_P2P)) then
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_TAIL;
     else
       payload_data(DMA_NOC_FLIT_SIZE-1 downto DMA_NOC_FLIT_SIZE-PREAMBLE_WIDTH) := PREAMBLE_BODY;
@@ -863,13 +926,13 @@ begin  -- rtl
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
-          sample_rd_size <= '1';
+          sample_rd <= '1';
           dma_next <= rd_handshake;
         elsif wr_request = '1' then
           if scatter_gather = 0 then
             sample_flits <= '1';
           end if;
-          sample_wr_size <= '1';
+          sample_wr <= '1';
           dma_next <= wr_handshake;
         end if;
 
@@ -896,6 +959,7 @@ begin  -- rtl
         sample_status <= '1';
         clear_acc_done <= '1';
         dma_next <= idle;
+        p2p_length_v := (others => '0');
 
       when config =>
         -- Set conf_done to start the accelerator.
@@ -931,7 +995,7 @@ begin  -- rtl
           elsif dma_tran_start = '1' and scatter_gather /= 0 then
             sample_flits <= '1';
             if coherence /= ACC_COH_FULL then
-              if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+              if p2p_store = '1' then
                 dma_next <= wait_req_p2p;
               else
                 dma_next <= send_header;
@@ -941,7 +1005,7 @@ begin  -- rtl
             end if;
           elsif scatter_gather = 0 then
             if coherence /= ACC_COH_FULL then
-              if bankreg(P2P_REG)(P2P_BIT_DST_IS_P2P) = '1' then
+              if p2p_store = '1' then
                 dma_next <= wait_req_p2p;
               else
                 dma_next <= send_header;
@@ -1056,7 +1120,7 @@ begin  -- rtl
 
             -- local accelerator has finished its write burst
             if burst_count = len then
-              if p2p_count < rcv_p2p_length then
+              if p2p_count < rcv_p2p_length and msg = RSP_P2P then
                 -- burst length is less than what consumer accelerator requested
                 continue_p2p := '1';
               else
@@ -1064,11 +1128,14 @@ begin  -- rtl
                 continue_p2p := '0';
                 clear_p2p_count <= '1';
               end if;
+	      if p2p_mcast_packet = '1' then
+	        clear_burst_count_mcast <= '1';
+	      end if;
               clear_burst_count <= '1';
               dma_tran_done <= '1';
               dma_next <= running;
             -- the amount request by the consumer has been sent, but the accelerator burst is not complete
-            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length then
+            elsif burst_count > conv_std_logic_vector(0, 32) and burst_count = rcv_p2p_length and msg = RSP_P2P  then
               continue_p2p := '0';
               if (p2p_count = len) then
                 --if burst completes, go back to idle
@@ -1084,6 +1151,15 @@ begin  -- rtl
             else
               increment_burst_count <= '1';
               increment_p2p_count <= '1';
+	      if p2p_mcast_packet = '1' then
+	        if burst_count_mcast = p2p_mcast_depth then
+		  clear_burst_count_mcast <= '1';
+		  dma_next <= send_header;
+		  continue_p2p := '1';
+	        else
+		  increment_burst_count_mcast <= '1';
+		end if;
+	      end if;
             end if;
           end if;
         end if;
@@ -1110,7 +1186,6 @@ begin  -- rtl
             clear_word_count <= '1';
             if preamble = PREAMBLE_TAIL and tlb_count = bankreg(PT_NCHUNK_REG) - 1 then
               clear_burst_count <= '1';
-              clear_p2p_count <= '1';
               clear_tlb_count <= '1';
               tlb_valid <= '1';
               dma_next <= idle;
@@ -1124,13 +1199,12 @@ begin  -- rtl
             increment_burst_count <= '1';
             if preamble = PREAMBLE_TAIL then
               --if producer sends less data than requested, then wait for another header
-              if msg = REQ_P2P and (burst_count < read_length - 1) then
+              if msg = REQ_P2P and (burst_count < read_length) then
                   dma_next <= reply_header;
               else
                 dma_tran_done <= '1';
                 dma_next <= running;
                 clear_burst_count <= '1';
-                clear_p2p_count <= '1';
               end if;
             end if;
           end if;
@@ -1263,7 +1337,7 @@ begin  -- rtl
   process(apbi, bankreg)
     variable addr : integer range 0 to MAXREGNUM - 1;
   begin
-    addr := conv_integer(apbi.paddr(7 downto 2));
+    addr := conv_integer(apbi.paddr(8 downto 2));
 
     bankin <= (others => (others => '0'));
     sample <= (others => '0');
@@ -1301,10 +1375,13 @@ begin  -- rtl
         if clk'event and clk = '1' then  -- rising clock edge
           if rst = '0' then                   -- synchronous reset (active low)
             bankreg(i) <= bankdef(i);
+          elsif i = YX_REG then
+            bankreg(i)(2 * YX_WIDTH - 1 downto 0) <= local_y & local_x;
+            if sample(i) = '1' then
+              bankreg(i)(31 downto 2  * YX_WIDTH) <= bankin(i)(31 downto 2 * YX_WIDTH);
+            end if;
           elsif sample(i) = '1' and rdonly_reg_mask(i) = '0' then
             bankreg(i) <= bankin(i);
-          elsif i = YX_REG then
-            bankreg(i) <=  "0000000000000" & local_y & "0000000000000" & local_x;
           end if;
         end if;
       end process;

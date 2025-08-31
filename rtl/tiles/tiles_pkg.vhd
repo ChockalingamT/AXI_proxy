@@ -86,7 +86,7 @@ package tiles_pkg is
   component tile_cpu is
     generic (
       SIMULATION         : boolean              := false;
-      this_has_dco       : integer range 0 to 1 := 0);
+      this_has_dco       : integer range 0 to 2 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
@@ -150,7 +150,7 @@ package tiles_pkg is
       this_device        : devid_t              := 0;
       this_irq_type      : integer              := 0;
       this_has_l2        : integer range 0 to 1 := 0;
-      this_has_dco       : integer range 0 to 1 := 0);
+      this_has_dco       : integer range 0 to 2 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_ulogic;
@@ -233,13 +233,6 @@ package tiles_pkg is
       dco_cc_sel         : in std_logic_vector(5 downto 0);
       dco_clk_sel        : in std_ulogic;
       dco_en             : in std_ulogic;  
-      -- NoC DCO config
-      dco_noc_freq_sel       : in std_logic_vector(1 downto 0);
-      dco_noc_div_sel        : in std_logic_vector(2 downto 0);
-      dco_noc_fc_sel         : in std_logic_vector(5 downto 0);
-      dco_noc_cc_sel         : in std_logic_vector(5 downto 0);
-      dco_noc_clk_sel        : in std_ulogic;
-      dco_noc_en             : in std_ulogic;  
       -- I/O bus interfaces
       eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
@@ -256,6 +249,7 @@ package tiles_pkg is
       uart_txd           : out std_ulogic;
       uart_ctsn          : in  std_ulogic;
       uart_rtsn          : out std_ulogic;
+      mdcscaler          : out std_logic_vector(ESP_CSR_MDC_SCALER_CFG_MSB - ESP_CSR_MDC_SCALER_CFG_LSB downto 0);
       -- I/O link
       iolink_data_oen   : out std_logic;
       iolink_data_in    : in  std_logic_vector(CFG_IOLINK_BITS - 1 downto 0);
@@ -310,7 +304,7 @@ package tiles_pkg is
   component tile_mem is
     generic (
       SIMULATION   : boolean := false;
-      this_has_dco : integer range 0 to 1 := 0;
+      this_has_dco : integer range 0 to 2 := 0;
       this_has_ddr : integer range 0 to 1 := 1);
     port (
       raw_rstn           : in  std_ulogic;
@@ -318,7 +312,7 @@ package tiles_pkg is
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tile_clk_out       : out std_ulogic;
-      tile_rstn_out          : out std_ulogic;
+      tile_rstn_out      : out std_ulogic;
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -422,7 +416,7 @@ package tiles_pkg is
   component tile_empty is
     generic (
       SIMULATION   : boolean              := false;
-      this_has_dco : integer range 0 to 1 := 0);
+      this_has_dco : integer range 0 to 2 := 0);
     port (
       raw_rstn           : in  std_ulogic;
       tile_rst           : in  std_logic;
@@ -481,7 +475,7 @@ package tiles_pkg is
   component tile_slm is
     generic (
       SIMULATION   : boolean := false;
-      this_has_dco : integer range 0 to 1 := 0;
+      this_has_dco : integer range 0 to 2 := 0;
       this_has_ddr : integer range 0 to 1 := 0);
     port (
       raw_rstn           : in  std_ulogic;
@@ -489,7 +483,8 @@ package tiles_pkg is
       ext_clk            : in  std_ulogic;
       clk_div            : out std_ulogic;
       tile_clk_out       : out std_ulogic;
-      tile_rstn_out          : out std_ulogic;
+      tile_rstn_out      : out std_ulogic;
+      tile_id_out        : out std_logic_vector(ESP_CSR_TILE_ID_MSB - ESP_CSR_TILE_ID_LSB downto 0);
       -- DCO config
       dco_freq_sel       : in std_logic_vector(1 downto 0);
       dco_div_sel        : in std_logic_vector(2 downto 0);
@@ -504,6 +499,9 @@ package tiles_pkg is
       phy_rstn           : out std_ulogic;
       ddr_ahbsi          : out ahb_slv_in_type;
       ddr_ahbso          : in  ahb_slv_out_type;
+      ddr_cfg0           : out std_logic_vector(31 downto 0);
+      ddr_cfg1           : out std_logic_vector(31 downto 0);
+      ddr_cfg2           : out std_logic_vector(31 downto 0);
       -- NoC
       test1_output_port   : in coh_noc_flit_type;
       test1_data_void_out : in std_ulogic;

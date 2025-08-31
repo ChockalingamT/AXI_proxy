@@ -142,13 +142,17 @@ $(RTL_CFG_BUILD):
 techmap_flist:
 	$(shell cd $(ESP_ROOT)/rtl ; (find -L techmap/ -not \( -path techmap/unisim -prune \) \
                 -not \( -path techmap/maps -prune \) -not \( -path techmap/inferred -prune \)  -name "*.vhd") > $(ESP_ROOT)/utils/flist/techmap_vhdl.flist ; \
-		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.v") > $(ESP_ROOT)/utils/flist/techmap_vlog.flist ; \
-		(find -L techmap/ -not \( -path techmap/unisim -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
+		(find -L techmap/ -not \( -path techmap/unisim -prune \) -not \( -path techmap/asic/mem/tb -prune \) -name "*.v") > $(ESP_ROOT)/utils/flist/techmap_vlog.flist ; \
+		(find -L techmap/ -not \( -path techmap/unisim -prune \) -not \( -path techmap/asic/mem/tb -prune \) -name "*.sv") >> $(ESP_ROOT)/utils/flist/techmap_vlog.flist  ; cd $(ESP_ROOT)/../$(PROJECT_NAME) )
 
 
 check_all_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
-	@echo $(ALL_SIM_SRCS) > $@.new; \
-	if test -f $(RTL_CFG_BUILD)/$@.old; then \
+	@echo $(SIM_VHDL_PKGS) > $@.new;
+	@echo $(SIM_VHDL_SRCS) >> $@.new;
+	@echo $(SIM_VLOG_SRCS) >> $@.new;
+	@echo $(IP_XCI_SRCS) >> $@.new;
+	@echo $(DAT_SRCS) >> $@.new;
+	@if test -f $(RTL_CFG_BUILD)/$@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \
@@ -169,8 +173,12 @@ check_all_srcs-distclean:
 .PHONY: check_all_srcs check_all_srcs-distclean
 
 check_all_rtl_srcs: $(GRLIB_CFG_BUILD)/grlib_config.vhd $(ESP_CFG_BUILD)/socmap.vhd socketgen $(ESP_CFG_BUILD)/plic_regmap.sv techmap_flist $(RTL_CFG_BUILD) token_pm_divider_hls
-	@echo $(ALL_RTL_SRCS) > $@.new; \
-	if test -f $@.old; then \
+	@echo $(VHDL_PKGS) > $@.new;
+	@echo $(VHDL_SRCS) >> $@.new;
+	@echo $(VLOG_SRCS) >> $@.new;
+	@echo $(IP_XCI_SRCS) >> $@.new;
+	@echo $(DAT_SRCS) >> $@.new;
+	@if test -f $@.old; then \
 		/usr/bin/diff -q $(RTL_CFG_BUILD)/$@.old $@.new > /dev/null; \
 		if [ $$? -eq 0 ]; then \
 			rm $@.new; \

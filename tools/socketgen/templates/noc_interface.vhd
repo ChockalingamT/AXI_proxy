@@ -127,14 +127,12 @@ end;
     PT_NCHUNK_MAX_REG  => '1',
     -- EXP_DO_REG         => '1', -- uncomment if re-enabling regs for SRAM
                                   -- expansion to reg bank
-    YX_REG             => '1',
     -- <<user_read_only>>
     others             => '0');
   -- Available registers mask (lo: common; hi: user defined)
   constant available_reg_mask : std_logic_vector(0 to MAXREGNUM - 1) := (
     CMD_REG            => '1',
     STATUS_REG         => '1',
-    SELECT_REG         => '1',
     DEVID_REG          => '1',
     PT_ADDRESS_REG     => '1',
     PT_NCHUNK_REG      => '1',
@@ -144,8 +142,17 @@ end;
     DST_OFFSET_REG     => '1',
     COHERENCE_REG      => '1',
     P2P_REG            => '1',
-    YX_REG             => '1',
     SPANDEX_REG        => '1',
+    MCAST_REG          => '1',
+    YX_REG             => '1',
+    YX_REG_2           => '1',
+    YX_REG_3           => '1',
+    YX_REG_4           => '1',
+    YX_REG_5           => '1',
+    YX_REG_6           => '1',
+    YX_REG_7           => '1',
+    YX_REG_8           => '1',
+    YX_REG_9           => '1',
     -- <<user_mask>>
     others             => '0');
 
@@ -166,7 +173,6 @@ end;
   constant bankdef : bank_type(0 to MAXREGNUM - 1) := (
     DEVID_REG          => conv_std_logic_vector(vendorid, 16) & conv_std_logic_vector(devid, 16),
     PT_NCHUNK_MAX_REG  => conv_std_logic_vector(check_scatter_gather(tlb_entries), 32),
-    YX_REG             => (others => '0'),
     -- <<user_read_only_default>>
     others             => (others => '0'));
 
@@ -197,11 +203,13 @@ end;
   signal dma_read_ctrl_data_index   : std_logic_vector(31 downto 0);
   signal dma_read_ctrl_data_length  : std_logic_vector(31 downto 0);
   signal dma_read_ctrl_data_size    : std_logic_vector(2 downto 0);
+  signal dma_read_ctrl_data_user    : std_logic_vector(5 downto 0);
   signal dma_write_ctrl_valid       : std_ulogic;
   signal dma_write_ctrl_ready       : std_ulogic;
   signal dma_write_ctrl_data_index  : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_length : std_logic_vector(31 downto 0);
   signal dma_write_ctrl_data_size   : std_logic_vector(2 downto 0);
+  signal dma_write_ctrl_data_user   : std_logic_vector(5 downto 0);
   signal dma_read_chnl_valid        : std_ulogic;
   signal dma_read_chnl_ready        : std_ulogic;
   signal dma_read_chnl_data         : std_logic_vector(DMA_NOC_WIDTH - 1 downto 0);
@@ -246,11 +254,13 @@ end;
   attribute keep of dma_read_ctrl_data_index : signal is "true";
   attribute keep of dma_read_ctrl_data_length : signal is "true";
   attribute keep of dma_read_ctrl_data_size : signal is "true";
+  attribute keep of dma_read_ctrl_data_user : signal is "true";
   attribute keep of dma_write_ctrl_valid : signal is "true";
   attribute keep of dma_write_ctrl_ready : signal is "true";
   attribute keep of dma_write_ctrl_data_index : signal is "true";
   attribute keep of dma_write_ctrl_data_length : signal is "true";
   attribute keep of dma_write_ctrl_data_size : signal is "true";
+  attribute keep of dma_write_ctrl_data_user : signal is "true";
   attribute keep of dma_read_chnl_valid : signal is "true";
   attribute keep of dma_read_chnl_ready : signal is "true";
   attribute keep of dma_read_chnl_data : signal is "true";
@@ -351,6 +361,7 @@ begin
       rdonly_reg_mask    => rdonly_reg_mask,
       exp_registers      => exp_registers,
       scatter_gather     => scatter_gather,
+      has_l2             => has_l2,
       tlb_entries        => tlb_entries)
     port map (
       rst                           => rst,
@@ -370,6 +381,7 @@ begin
       rd_index                      => dma_read_ctrl_data_index,
       rd_length                     => dma_read_ctrl_data_length,
       rd_size                       => dma_read_ctrl_data_size,
+      rd_source                     => dma_read_ctrl_data_user,
       rd_grant                      => dma_read_ctrl_ready,
       bufdin_ready                  => dma_read_chnl_ready,
       bufdin_data                   => dma_read_chnl_data,
@@ -378,6 +390,7 @@ begin
       wr_index                      => dma_write_ctrl_data_index,
       wr_length                     => dma_write_ctrl_data_length,
       wr_size                       => dma_write_ctrl_data_size,
+      wr_ndests                     => dma_write_ctrl_data_user,
       wr_grant                      => dma_write_ctrl_ready,
       bufdout_ready                 => dma_write_chnl_ready,
       bufdout_data                  => dma_write_chnl_data,
@@ -421,9 +434,18 @@ begin
   coherence_model_select: process (bank, dma_rcv_data, dma_rcv_valid, dma_snd_ready,
                                    dma_rcv_data_out, dma_rcv_empty, dma_snd_full,
                                    dma_rcv_rdreq_int, dma_snd_wrreq_int) is
-    variable coherence : integer range 0 to ACC_COH_FULL;
+    variable coherence, coherence_tmp : integer range 0 to ACC_COH_FULL;
   begin  -- process coherence_model_select
-    coherence := conv_integer(bank(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+    coherence_tmp := conv_integer(bank(COHERENCE_REG)(COH_T_LOG2 - 1 downto 0));
+
+    if CFG_LLC_ENABLE = 0 then
+      coherence := ACC_COH_NONE;
+    elsif has_l2 = 0 and coherence_tmp = ACC_COH_FULL then
+      coherence := ACC_COH_RECALL;
+    else
+      coherence := coherence_tmp;
+    end if;
+
     if coherence = ACC_COH_FULL then
       dma_rcv_data_out_int <= dma_rcv_data;
       dma_rcv_empty_int    <= not dma_rcv_valid;
