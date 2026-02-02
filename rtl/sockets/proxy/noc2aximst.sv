@@ -805,18 +805,20 @@ module noc2aximst
                 if (dma_rcv_empty == 1'b0) begin
                     dma_rcv_rdreq = 1'b1;
                     ns.ar_prot = cs.ax_prot;
-                    ns.ar_addr = dma_rcv_data_out[GLOB_PHYS_ADDR_BITS-1:0];
                     if (cs.msg == DMA_TO_DEV || cs.msg == REQ_DMA_READ) begin
 						next_state = DMA_RECEIVE_READ_LENGTH;
+                    	ns.ar_addr = dma_rcv_data_out[GLOB_PHYS_ADDR_BITS-1:0];
 		    		end 
 					else begin
 						ns.aw_len  = 0;
 		    			if (cs.msg == DMA_FROM_DEV) begin
 							ns.coh_dma_flag = 1'b0;
+                    		ns.aw_addr = dma_rcv_data_out[GLOB_PHYS_ADDR_BITS-1:0];
 							next_state = DMA_RECEIVE_WRITE_LENGTH;
 						end
 		    			else begin
 							ns.coh_dma_flag = 1'b1;
+                    		ns.aw_addr = dma_rcv_data_out[GLOB_PHYS_ADDR_BITS-1:0];
 							next_state = DMA_WRITE_REQUEST;
 						end
 						ns.w_strb = 0;
