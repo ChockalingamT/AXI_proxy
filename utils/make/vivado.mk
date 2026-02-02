@@ -94,13 +94,14 @@ ifneq ($(IP_XCI_SRCS),)
 	done;
 	@echo "upgrade_ip [get_ips -all]" >> $@
 endif
-	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.xci; then \
+	@if test -r $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig.xci; then \
 		echo $(SPACES)"INFO including MIG IP"; \
 		mkdir -p vivado/mig; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.xci ./vivado/mig; \
-		if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.prj; then \
-			cp $(ESP_ROOT)/constraints/$(BOARD)/mig.prj ./vivado/mig; \
-		fi; \
+        cp $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig.xci ./vivado/mig; \
+        if test -r $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig_a.prj; then \
+            cp $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig_a.prj ./vivado/mig; \
+            cp $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig_b.prj ./vivado/mig; \
+        fi; \
 		echo "import_ip -files ./mig/mig.xci" >> $@; \
 		echo "generate_target  all [get_ips mig] -force " >> $@; \
 	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.tcl; then \
@@ -204,10 +205,10 @@ vivado/syn.tcl: vivado
 #	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 	@echo "launch_runs synth_1 -jobs 12" >> $@
 	@echo "get_ips" >> $@
-	@echo "wait_on_run -timeout 360 synth_1" >> $@
+	@echo "wait_on_run -timeout 720 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
 	@echo "launch_runs impl_1 -jobs 12" >> $@
-	@echo "wait_on_run -timeout 360 impl_1" >> $@
+	@echo "wait_on_run -timeout 720 impl_1" >> $@
 	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
 	@echo "wait_on_run -timeout 60 impl_1" >> $@
 
@@ -224,10 +225,10 @@ vivado/syn_emu.tcl: vivado
 #	@echo "synth_design -resource_sharing off -keep_equivalent_registers -no_lc -rtl -name rtl_1" >> $@
 	@echo "launch_runs synth_1 -jobs 12" >> $@
 	@echo "get_ips" >> $@
-	@echo "wait_on_run -timeout 360 synth_1" >> $@
+	@echo "wait_on_run -timeout 720 synth_1" >> $@
 	@echo "set_msg_config -suppress -id {Drc 23-20}" >> $@
 	@echo "launch_runs impl_1 -jobs 12" >> $@
-	@echo "wait_on_run -timeout 360 impl_1" >> $@
+	@echo "wait_on_run -timeout 720 impl_1" >> $@
 	@echo "launch_runs impl_1 -to_step write_bitstream" >> $@
 	@echo "wait_on_run -timeout 60 impl_1" >> $@
 

@@ -67,7 +67,7 @@ entity tile_mem is
     s_axi_awvalid      : out   std_logic;
     s_axi_awready      : in    std_logic;
     s_axi_wdata        : out   std_logic_vector(AXIDW-1 downto 0);
-    s_axi_wstrb        : out   std_logic_vector(AW-1 downto 0);
+    s_axi_wstrb        : out   std_logic_vector((AXIDW/8)-1 downto 0);
     s_axi_wlast        : out   std_logic;
     s_axi_wvalid       : out   std_logic;
     s_axi_wready       : in    std_logic;
@@ -477,7 +477,34 @@ architecture rtl of tile_mem is
     others => '0');
 
   attribute keep              : string;
+  attribute mark_debug : string;
+  attribute mark_debug of remote_ahbm_rcv_rdreq  : signal is "true";
+  attribute mark_debug of remote_ahbm_rcv_data_out : signal is "true";
+  attribute mark_debug of remote_ahbm_rcv_empty : signal is "true";
+  attribute mark_debug of remote_ahbm_snd_wrreq : signal is "true"; 
+  attribute mark_debug of remote_ahbm_snd_data_in : signal is "true"; 
+  attribute mark_debug of remote_ahbm_snd_full : signal is "true";
 
+  attribute mark_debug of  mst1_aw_id       : signal is "true";
+  attribute mark_debug of  mst1_aw_addr     : signal is "true";
+  attribute mark_debug of  mst1_aw_len      : signal is "true";
+  attribute mark_debug of  mst1_aw_size     : signal is "true";
+  attribute mark_debug of  mst1_aw_burst    : signal is "true";
+  attribute mark_debug of  mst1_aw_lock     : signal is "true";
+  attribute mark_debug of  mst1_aw_cache    : signal is "true";
+  attribute mark_debug of  mst1_aw_prot     : signal is "true";
+  attribute mark_debug of  mst1_aw_qos      : signal is "true";
+  attribute mark_debug of  mst1_aw_atop     : signal is "true";
+  attribute mark_debug of  mst1_aw_region   : signal is "true";
+  attribute mark_debug of  mst1_aw_user     : signal is "true";
+  attribute mark_debug of  mst1_aw_valid    : signal is "true";
+  attribute mark_debug of  mst1_aw_ready    : signal is "true";
+  attribute mark_debug of  mst1_w_data      : signal is "true";
+  attribute mark_debug of  mst1_w_strb      : signal is "true";
+  attribute mark_debug of  mst1_w_last      : signal is "true";
+  attribute mark_debug of  mst1_w_user      : signal is "true";
+  attribute mark_debug of  mst1_w_valid     : signal is "true";
+  attribute mark_debug of mst1_w_ready     : signal is "true";
 begin
 
   -- DCO Reset synchronizer
@@ -656,16 +683,16 @@ begin
       mst1_aw_addr 	=> mst1_aw_addr,
       mst1_aw_len 	=> mst1_aw_len,
       mst1_aw_size 	=> mst1_aw_size,
-      mst1_aw_burst 	=> mst1_aw_burst,
+      mst1_aw_burst => mst1_aw_burst,
       mst1_aw_lock 	=> mst1_aw_lock,
-      mst1_aw_cache 	=> (others => '0'),
+      mst1_aw_cache => (others => '0'),
       mst1_aw_prot 	=> mst1_aw_prot,
       mst1_aw_qos 	=> (others => '0'),
       mst1_aw_atop 	=> (others => '0'),
-      mst1_aw_region 	=> (others => '0'),
+      mst1_aw_region => (others => '0'),
       mst1_aw_user 	=> (others => '0'),
       mst1_aw_valid	=> mst1_aw_valid,
-      mst1_aw_ready 	=> mst1_aw_ready,
+      mst1_aw_ready => mst1_aw_ready,
       mst1_w_data 	=> mst1_w_data,
       mst1_w_strb 	=> mst1_w_strb,
       mst1_w_last 	=> mst1_w_last,
@@ -681,15 +708,15 @@ begin
       mst1_ar_addr 	=> mst1_ar_addr,
       mst1_ar_len 	=> mst1_ar_len,
       mst1_ar_size 	=> mst1_ar_size,
-      mst1_ar_burst 	=> mst1_ar_burst,
+      mst1_ar_burst	=> mst1_ar_burst,
       mst1_ar_lock 	=> mst1_ar_lock,
-      mst1_ar_cache 	=> (others => '0'),
+      mst1_ar_cache	=> (others => '0'),
       mst1_ar_prot 	=> mst1_ar_prot,
       mst1_ar_qos 	=> (others => '0'),
-      mst1_ar_region 	=> (others => '0'),
+      mst1_ar_region => (others => '0'),
       mst1_ar_user 	=> (others => '0'),
-      mst1_ar_valid 	=> mst1_ar_valid,
-      mst1_ar_ready 	=> mst1_ar_ready,
+      mst1_ar_valid => mst1_ar_valid,
+      mst1_ar_ready => mst1_ar_ready,
       mst1_r_id 	=> mst1_r_id,
       mst1_r_data 	=> mst1_r_data,
       mst1_r_resp 	=> mst1_r_resp,
@@ -702,16 +729,16 @@ begin
       mst2_aw_addr 	=> mst2_aw_addr,
       mst2_aw_len 	=> mst2_aw_len,
       mst2_aw_size 	=> mst2_aw_size,
-      mst2_aw_burst 	=> mst2_aw_burst,
+      mst2_aw_burst => mst2_aw_burst,
       mst2_aw_lock 	=> mst2_aw_lock,
-      mst2_aw_cache 	=> (others => '0'),
+      mst2_aw_cache => (others => '0'),
       mst2_aw_prot 	=> mst2_aw_prot,
       mst2_aw_qos 	=> (others => '0'),
       mst2_aw_atop 	=> (others => '0'),
-      mst2_aw_region 	=> (others => '0'),
+      mst2_aw_region => (others => '0'),
       mst2_aw_user 	=> (others => '0'),
       mst2_aw_valid	=> mst2_aw_valid,
-      mst2_aw_ready 	=> mst2_aw_ready,
+      mst2_aw_ready => mst2_aw_ready,
       mst2_w_data 	=> mst2_w_data,
       mst2_w_strb 	=> mst2_w_strb,
       mst2_w_last 	=> mst2_w_last,
@@ -727,15 +754,15 @@ begin
       mst2_ar_addr 	=> mst2_ar_addr,
       mst2_ar_len 	=> mst2_ar_len,
       mst2_ar_size 	=> mst2_ar_size,
-      mst2_ar_burst 	=> mst2_ar_burst,
+      mst2_ar_burst => mst2_ar_burst,
       mst2_ar_lock 	=> mst2_ar_lock,
-      mst2_ar_cache 	=> (others => '0'),
+      mst2_ar_cache => (others => '0'),
       mst2_ar_prot 	=> mst2_ar_prot,
       mst2_ar_qos 	=> (others => '0'),
-      mst2_ar_region 	=> (others => '0'),
+      mst2_ar_region => (others => '0'),
       mst2_ar_user 	=> (others => '0'),
-      mst2_ar_valid 	=> mst2_ar_valid,
-      mst2_ar_ready 	=> mst2_ar_ready,
+      mst2_ar_valid => mst2_ar_valid,
+      mst2_ar_ready => mst2_ar_ready,
       mst2_r_id 	=> mst2_r_id,
       mst2_r_data 	=> mst2_r_data,
       mst2_r_resp 	=> mst2_r_resp,
@@ -1111,7 +1138,7 @@ begin
         dma_snd_full              	=> coherent_dma_snd_full
         );
 
-		-- Tie off mst2 signals (only 2 masters are used)
+	  -- Tie off mst2 signals (only 2 masters are used)
       mst2_aw_id 	<= "10";
       mst2_aw_addr 	<= (others => '0');
       mst2_aw_len 	<= (others => '0');

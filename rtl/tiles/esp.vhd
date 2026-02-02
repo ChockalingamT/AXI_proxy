@@ -51,7 +51,7 @@ entity esp is
     s_axi_awvalid     : out   std_logic;
     s_axi_awready     : in    std_logic;
     s_axi_wdata       : out   std_logic_vector(AXIDW-1 downto 0);
-    s_axi_wstrb       : out   std_logic_vector(AW-1 downto 0);
+    s_axi_wstrb       : out   std_logic_vector((AXIDW/8)-1 downto 0);
     s_axi_wlast       : out   std_logic;
     s_axi_wvalid      : out   std_logic;
     s_axi_wready      : in    std_logic;

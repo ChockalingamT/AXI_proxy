@@ -78,22 +78,28 @@ endif
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.v")))
 VLOG_SRCS += $(foreach f, $(RTL_TECH_FOLDERS), $(shell (find $(f) -name "*.sv")))
 
+ifneq ("$(CPU_ARCH)", "ariane")
+INCDIR += $(ARIANE)/src/util
+#INCDIR += $(ARIANE)/include
+INCDIR += $(ARIANE)/src/common_cells/include
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/include/common_cells -name "registers.svh"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/fpu/src/common_cells/include/common_cells -name "registers.svh"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src -name "axi_pkg.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src -name "*.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/riscv-dbg/src -name "dm_pkg.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/riscv-dbg/src -name "*.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "riscv_pkg.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "*ariane_pkg.sv"))
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "ariane_pkg.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ -name "ariane_soc_pkg.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "*.sv"))
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src -name "axi_pkg.sv"))
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "*.sv" ! -name "ariane_pkg.sv" ! -name "riscv_pkg.sv"))
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src -name "*.sv" ! -name "axi_test.sv" ! -name "axi_pkg.sv"))
+#VLOG_SRCS += $(shell find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src -name "axi_pkg.sv")
+#VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/riscv-dbg/src -name "*.sv"))
+#VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "*ariane_pkg.sv"))
+#VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ -name "ariane_soc_pkg.sv"))
+#VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include -name "*.sv"))
 
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/register_interface/src/ -name "*.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include/ -name "*.sv"))
+#VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/include/ -name "*.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi_node/src/ -name "*.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/axi/src/ -name "*.sv"))
-VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util/ -name "*.sv"))
+VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/util -name "*.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "spill_register.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "stream_arbiter.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/ -name "stream_arbiter_flushable.sv"))
@@ -102,6 +108,7 @@ VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/deprecated/ -name "*fifo_v1.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/deprecated/ -name "*fifo_v2.sv"))
 VLOG_SRCS += $(shell (find $(ESP_ROOT)/rtl/cores/ariane/ariane/src/common_cells/src/deprecated/ -name "*rrarbiter.sv"))
+endif
 
 VLOG_SRCS += $(THIRDPARTY_VLOG) $(THIRDPARTY_SVLOG)
 VLOG_SRCS += $(TOP_VLOG_RTL_SRCS)
