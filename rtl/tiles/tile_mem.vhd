@@ -505,6 +505,50 @@ architecture rtl of tile_mem is
   attribute mark_debug of  mst1_w_user      : signal is "true";
   attribute mark_debug of  mst1_w_valid     : signal is "true";
   attribute mark_debug of mst1_w_ready     : signal is "true";
+  
+  attribute mark_debug of  mst0_aw_id       : signal is "true";
+  attribute mark_debug of  mst0_aw_addr     : signal is "true";
+  attribute mark_debug of  mst0_aw_len      : signal is "true";
+  attribute mark_debug of  mst0_aw_size     : signal is "true";
+  attribute mark_debug of  mst0_aw_burst    : signal is "true";
+  attribute mark_debug of  mst0_aw_lock     : signal is "true";
+  attribute mark_debug of  mst0_aw_cache    : signal is "true";
+  attribute mark_debug of  mst0_aw_prot     : signal is "true";
+  attribute mark_debug of  mst0_aw_qos      : signal is "true";
+  attribute mark_debug of  mst0_aw_atop     : signal is "true";
+  attribute mark_debug of  mst0_aw_region   : signal is "true";
+  attribute mark_debug of  mst0_aw_user     : signal is "true";
+  attribute mark_debug of  mst0_aw_valid    : signal is "true";
+  attribute mark_debug of  mst0_aw_ready    : signal is "true";
+  attribute mark_debug of  mst0_w_data      : signal is "true";
+  attribute mark_debug of  mst0_w_strb      : signal is "true";
+  attribute mark_debug of  mst0_w_last      : signal is "true";
+  attribute mark_debug of  mst0_w_user      : signal is "true";
+  attribute mark_debug of  mst0_w_valid     : signal is "true";
+  attribute mark_debug of mst0_w_ready     : signal is "true";
+
+  attribute mark_debug of coherence_req_rdreq        : signal is "true"; 
+  attribute mark_debug of coherence_req_data_out     : signal is "true"; 
+  attribute mark_debug of coherence_req_empty        : signal is "true"; 
+  attribute mark_debug of coherence_fwd_wrreq        : signal is "true"; 
+  attribute mark_debug of coherence_fwd_data_in      : signal is "true"; 
+  attribute mark_debug of coherence_fwd_full         : signal is "true"; 
+  attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true"; 
+  attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true"; 
+  attribute mark_debug of coherence_rsp_snd_full     : signal is "true"; 
+  attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true"; 
+  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true"; 
+
+  attribute mark_debug of dma_rcv_rdreq           : signal is "true"; 
+  attribute mark_debug of dma_rcv_data_out        : signal is "true"; 
+  attribute mark_debug of dma_rcv_empty           : signal is "true"; 
+  attribute mark_debug of dma_snd_wrreq           : signal is "true"; 
+  attribute mark_debug of dma_snd_data_in         : signal is "true"; 
+  attribute mark_debug of dma_snd_full            : signal is "true"; 
+  attribute mark_debug of dma_snd_atleast_4slots  : signal is "true"; 
+  attribute mark_debug of dma_snd_exactly_3slots  : signal is "true"; 
+
 begin
 
   -- DCO Reset synchronizer
@@ -1165,9 +1209,6 @@ begin
       mst2_ar_valid <= '0';
 	
       mst2_r_ready 	<= '0';
-
-
-
 
   end generate no_cache_coherence;
 

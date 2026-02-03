@@ -117,7 +117,7 @@ $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 $(SOFT_BUILD)/ram.vhx8: $(TEST_PROGRAM)
 	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O verilog $< $@
 	#python3 $(ESP_ROOT)/utils/scripts/srec/create_vhx_ariane.py $@ > $(SOFT_BUILD)/ram2.vhx
-	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_ariane.py 64 $<
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 64 $<
 	#rm $@
 
 $(SOFT_BUILD)/sysroot:

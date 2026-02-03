@@ -1,152 +1,16 @@
+// Copyright (c) 2011-2026 Columbia University, System Level Design Group
+// SPDC-License-Identifier: Apache-2.0
+
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 03/26/2024 08:14:58 PM
-// Design Name: 
-// Module Name: noc2aximst
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
 
 import esp_global_sv::*;
+import noc2aximst_pkg::*;
+
 
 `define PREAMBLE_WIDTH 2
 `define MSG_TYPE_WIDTH 5
 `define RESERVED_WIDTH 8
 `define NEXT_ROUTING_WIDTH 5
-
-localparam integer DMA_NOC_FLIT_SIZE = `PREAMBLE_WIDTH + DMA_NOC_WIDTH;
-localparam integer MAX_NOC_FLIT_SIZE = `PREAMBLE_WIDTH + MAX_NOC_WIDTH;
-
-//localparam integer AXIDW = ARCH_BITS;
-//localparam integer AW = ARCH_BITS / 8;
-
-
-//`define cacheline 8
-
-//`define RSP_AHB_RD 30
-//`define RSP_DATA 24
-//`define RSP_DATA_DMA
-`define XRESP_OKAY 0
-`define XRESP_EXOKAY 1
-`define XRESP_SLVERR 2
-`define XRESP_DECERR 3
-`define XBURST_FIXED 0
-`define XBURST_INCR  1
-`define XBURST_WRAP  2
-
-
-
-/*typedef enum logic [1:0] {
-
-    XBURST_FIXED = 2'b00,
-    XBURST_INCR  = 2'b01,
-    XBURST_WRAP  = 2'b10
-
-} burst_type;*/
-
-typedef enum logic [4:0] {
-
-    RSP_DATA     = 5'b11000,
-	RSP_EDATA    = 5'b11001,
-    RSP_DATA_DMA = 5'b11011,
-	RSP_AHB_RD   = 5'b11110
-
-} resp_type;
-
-typedef enum logic [4:0] {
-
-    REQ_GETS_W  = 5'b11000,
-    REQ_GETM_W  = 5'b11001,
-
-    REQ_GETS_B  = 5'b11100,
-    REQ_GETS_HW = 5'b11101,
-    REQ_GETM_B  = 5'b11110,
-    REQ_GETM_HW = 5'b11111,
-
-	AHB_RD      = 5'b11010,
-	AHB_WR      = 5'b11011
-} req_type;
-
-
-
-typedef enum logic [4:0] {
-
-    DMA_TO_DEV	  = 5'b11001,
-    DMA_FROM_DEV  = 5'b11010,
-
-    REQ_DMA_READ  = 5'b11110,
-    REQ_DMA_WRITE = 5'b11111
-
-} dma_req_type;
-
-typedef enum logic [2:0] {
-
-    XSIZE_BYTE  = 3'b000,
-    XSIZE_HWORD = 3'b001,
-    XSIZE_WORD  = 3'b010,
-    XSIZE_DWORD = 3'b011
-
-} transfer_size;
-
-typedef enum logic [1:0] {
-
-    PREAMBLE_HEADER = 2'b10,
-    PREAMBLE_TAIL   = 2'b01,
-    PREAMBLE_BODY   = 2'b00,
-    PREAMBLE_1FLIT  = 2'b11
-
-} preamble_type;
-
-typedef struct {
-
-    logic [				  `MSG_TYPE_WIDTH-1 : 0] msg;
-    logic [	COH_NOC_WIDTH+`PREAMBLE_WIDTH-1 : 0] coh_flit;
-	
-	logic [  			DMA_NOC_FLIT_SIZE-1 : 0] dma_flit;
-    logic [          					  2 : 0] ax_prot;
-
-
-    logic [ GLOB_PHYS_ADDR_BITS-1 : 0] ar_addr;
-    logic [                    31 : 0] count;
-    logic                              burst_flag;
-
-    logic [                     7 : 0] ar_len;
-    logic [                     2 : 0] ar_size;
-    logic [                     2 : 0] ar_prot;
-
-
-    logic [ GLOB_PHYS_ADDR_BITS-1 : 0] aw_addr;
-    logic [                     7 : 0] aw_len;
-    logic [                     2 : 0] aw_size;
-    logic [                     2 : 0] aw_prot;
-
-    logic [						1 : 0] sample_flag;
-	logic							   coh_dma_flag;
-
-    logic [                  AW-1 : 0] w_strb;
-
-	logic [    $clog2(DMA_NOC_WIDTH/ARCH_BITS) : 0] word_cnt;
-	logic [DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] dma_noc_data;
-
-
-	//TODO: Verify (added for Ariane + ACC write word)
-	logic hsize_msb;
-
-
-} reg_type;
-
 
 module noc2aximst 
 
@@ -221,15 +85,14 @@ module noc2aximst
 
 );
 
-
     assign AR_ID = mst_index;
     assign AW_ID = mst_index;
 
     assign AW_LOCK = 1'b0;
     assign AR_LOCK = 1'b0;
 
-    assign AR_BURST = `XBURST_INCR;
-    assign AW_BURST = `XBURST_INCR;
+    assign AR_BURST = XBURST_INCR;
+    assign AW_BURST = XBURST_INCR;
 
 	logic [MAX_NOC_FLIT_SIZE-this_coh_flit_size : 0] this_noc_flit_pad;
 	assign this_noc_flit_pad = 0;
@@ -248,15 +111,15 @@ module noc2aximst
     (* mark_debug = "true" *) logic sample_header;
 
 
-    logic [ DMA_NOC_FLIT_SIZE-1  : 0] dma_header;
-	logic [ DMA_NOC_FLIT_SIZE-1  : 0] dma_header_reg;
-    logic                         	  sample_dma_header;
+    logic [DMA_NOC_FLIT_SIZE-1 : 0] dma_header;
+	logic [DMA_NOC_FLIT_SIZE-1 : 0] dma_header_reg;
+    logic sample_dma_header;
     
-
     logic [`RESERVED_WIDTH-1 : 0] reserved;
     logic [`PREAMBLE_WIDTH-1 : 0] preamble;
     logic [`PREAMBLE_WIDTH-1 : 0] dma_preamble;
 
+	//TODO: cleanup
     (* mark_debug = "true" *) logic [this_coh_flit_size-`PREAMBLE_WIDTH-1 : 0] coh_rd_data_flit;
 	(* mark_debug = "true" *) logic [ DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] dma_rd_data_flit;
 	(* mark_debug = "true" *) logic [AXIDW-1 : 0] wr_data_flit;
@@ -275,7 +138,6 @@ module noc2aximst
     localparam WRITE_REQUEST   = 5'b00110;
     localparam WRITE_DATA_EDCL = 5'b00111;
     localparam WRITE_DATA      = 5'b01000;
-    localparam DUMMY_STATE     = 5'b01001;
     //parameter WRITE_LAST_DATA = 5'b01001;
 
     localparam DMA_RECEIVE_ADDRESS     = 5'b01010;
@@ -295,21 +157,16 @@ module noc2aximst
     (* mark_debug = "true" *) reg_type cs, ns;
 
     always_comb begin
-
         ns = cs;
 		next_state = current_state;
-
         preamble 	 = pad_coherence_req_data_out[this_coh_flit_size-1:this_coh_flit_size-`PREAMBLE_WIDTH];
 		dma_preamble = pad_dma_rcv_data_out      [DMA_NOC_FLIT_SIZE-1:DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH];        
-
         reserved                  = 0;
         sample_header             = 1'b0;
 		sample_dma_header         = 1'b0;
-
         coherence_req_rdreq       = 0;
         coherence_rsp_snd_data_in = 0;
         coherence_rsp_snd_wrreq   = 1'b0;
-
         dma_rcv_rdreq   = 0;
         dma_snd_data_in = 0;
         dma_snd_wrreq   = 1'b0;
@@ -521,43 +378,6 @@ module noc2aximst
                 end
             end
 
-/*
-            WRITE_REQUEST: begin			// In this state AW_VALID is set and waiting for AW_READY
-
-				if (AW_READY == 1'b1) begin		// If AW_READY = 1, the Address transaction completes and we can move to Data transactions
-                    if (cs.msg == AHB_WR && ARCH_BITS == 64 && eth_dma == 1) // FIXME: eth_dma == 1 is not necessary
-                        next_state = WRITE_DATA_EDCL;
-                    else 
-                        next_state = WRITE_DATA;
-		    		ns.sample_flag = 2'b00;
-                     if (coherence_req_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
-                        coherence_req_rdreq = 1'b1;
-                        if (cs.msg == AHB_WR && ARCH_BITS == 64 && eth_dma == 1) begin
-                            if (cs.word_cnt == 1'b1) 
-                                ns.coh_flit = {cs.coh_flit[63:32], coherence_req_data_out[31:0]};
-                            else 
-                                ns.coh_flit = {coherence_req_data_out[31:0], 32'b0};
-                        end 
-						else 
-                            ns.coh_flit = coherence_req_data_out;	//TODO: Replace COH_NOC_WIDTH with this_coh
-                        if 		(preamble == PREAMBLE_BODY) ns.sample_flag = 2'b01;	// Instead of WRITE_WAIT STATE
-                        else if (preamble == PREAMBLE_TAIL) ns.sample_flag = 2'b10;
-                    end 
-                end
-            end
-*/
-
-
-/*
-	   WRITE_WAIT: begin					    // Compared to the WRITE_REQUEST state: here the AR_VALID is deasserted
-		        if (coherence_req_empty == 1'b0) begin
-                        	coherence_req_rdreq = 1'b1;
-                        	ns.flit = coherence_req_data_out;
-                        	if (preamble == PREAMBLE_BODY)      next_state = WRITE_DATA;
-                        	else if (preamble == PREAMBLE_TAIL) next_state = WRITE_LAST_DATA;
-		        end
-            end
-*/
             WRITE_DATA: begin
 
 				W_VALID = 1'b0;
@@ -666,145 +486,25 @@ module noc2aximst
 					end
 				end
             end
-
-
-/*
-           WRITE_DATA_EDCL: begin
-
-				W_VALID = 1'b0;
-				W_LAST  = 1'b0;
-
-				if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10) begin	// If one data has already been read in WRITE_REQUEST state
-                    if (cs.word_cnt != 1'b1 && coherence_req_empty == 1'b0) begin                      // Read one more
-                        coherence_req_rdreq = 1'b1;
-                        ns.coh_flit = {cs.coh_flit[63:32], coherence_req_data_out[31:0]};
-                        ns.word_cnt = cs.word_cnt + 1'b1;                       // Both words are already in place
-   					    W_VALID = 1'b1;
-				        W_LAST  = 1'b1;
-                        W_DATA = ns.coh_flit;
-					    if (W_READY == 1'b1) begin	// If the data can be read in the same cycle
-                            ns.word_cnt = 1'b0;
-						    ns.sample_flag = 2'b00; // The write process is complete
-						    if (cs.sample_flag == 2'b01 && preamble != PREAMBLE_TAIL) begin	// Unless this was only a body flit
-                	            ns.aw_addr = cs.aw_addr + 4'b1000;
-                			    next_state = WRITE_REQUEST;
-						    end else 
-							    next_state = RECEIVE_HEADER;
-                	    end
-                    end else if (cs.word_cnt == 1'b1) begin
-   					    W_VALID = 1'b1;
-					    W_LAST  = 1'b1;      
-                        W_DATA = cs.coh_flit;              
-					    if (W_READY == 1'b1) begin	// If the data can be read in the same cycle
-                            ns.word_cnt = 1'b0;
-						    ns.sample_flag = 2'b00; // The write process is complete
-						    if (cs.sample_flag == 2'b01) begin	// Unless this was only a body flit
-                	            ns.aw_addr = cs.aw_addr + 4'b1000;
-                			    next_state = WRITE_REQUEST;
-						    end else 
-							    next_state = RECEIVE_HEADER;
-                	    end
-                    end
-				end else if (cs.sample_flag == 2'b00 && coherence_req_empty == 1'b0) begin	// If no data have been received yet and there are available data
-
-					coherence_req_rdreq = 1'b1;			// Read this data
-                    ns.coh_flit = {coherence_req_data_out[31:0], 32'b0};
-					if 		(preamble == PREAMBLE_BODY) ns.sample_flag = 2'b01;
-	                else if (preamble == PREAMBLE_TAIL) ns.sample_flag = 2'b10;
-				   	W_DATA = ns.coh_flit;				
-				end
-            end
-
-*/
-
-/*           WRITE_DATA_EDCL: begin
-
-				W_VALID = 1'b0;
-				W_LAST  = 1'b0;
-
-				if (cs.sample_flag == 3'b001 || cs.sample_flag == 3'b010) begin	// If one data has already been read
-
-                    ns.word_cnt = cs.word_cnt + 1'b1;
-                    ns.sample_flag = 3'b000;
-                    if (cs.word_cnt == 1'b1) begin
-   					    W_VALID = 1'b1;
-					    W_LAST  = 1'b1;                    
-					    if (W_READY == 1'b1) begin	// If the data can be read in the same cycle
-						    ns.sample_flag = 3'b000; // The write process is complete
-						    if (cs.sample_flag == 3'b001) begin	// Unless this was only a body flit
-                	            ns.aw_addr = cs.aw_addr + 4'b1000;
-                			    next_state = WRITE_REQUEST;
-						    end else 
-							    next_state = RECEIVE_HEADER;
-                	    end
-                    end
-                
-               		W_DATA = cs.coh_flit;
-
-
-
-				end else if (cs.sample_flag == 3'b000 && coherence_req_empty == 1'b0) begin	// If no data have been received yet and there are available data
-
-					coherence_req_rdreq = 1'b1;			// Read this data
-
-                    //ns.word_cnt = cs.word_cnt + 1'b1;
-                    if (cs.word_cnt == 1'b1) begin
-                    	ns.coh_flit = {cs.coh_flit[63:32], coherence_req_data_out[31:0]};
-   					    W_VALID = 1'b1;
-					    W_LAST  = 1'b1;  
-						ns.word_cnt = cs.word_cnt + 1'b1;
-						if (W_READY == 1'b1) begin		// If it can already be read 
-							ns.sample_flag = 3'b000;		// The write process is complete
-							if (preamble == PREAMBLE_BODY) begin	// Unless this was only a body flit
-                				ns.aw_addr = cs.aw_addr + 4'b1000;
-		        				next_state = WRITE_REQUEST;
-							end else if (preamble == PREAMBLE_TAIL)
-								next_state = RECEIVE_HEADER;
-				    	end                 
-                    end else
-                    	ns.coh_flit = {coherence_req_data_out[31:0], 32'b0};
-						if 		(preamble == PREAMBLE_BODY) ns.sample_flag = 3'b001;
-	                	else if (preamble == PREAMBLE_TAIL) ns.sample_flag = 3'b010;
-					end
-
-				   	W_DATA = ns.coh_flit;				
-
-				end
-            end
-*/
-/*
-            WRITE_LAST_DATA: begin
-
-		if (little_end  == 0) begin
-			wr_data_flit = cs.flit[`ARCH_BITS-1 : 0];
-			if      (cs.aw_size == XSIZE_BYTE)  W_STRB[`AW-1] = 1'b1;
-			else if (cs.aw_size == XSIZE_HWORD) W_STRB[`AW-1:`AW-2] = 2'b1;
-			else if (cs.aw_size == XSIZE_WORD)  W_STRB[`AW-1:`AW-4] = 4'b1111;
-			else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-
-		end else begin
-			for (i = 0; i < (`ARCH_BITS / 8); i = i + 1) begin
-				wr_data_flit[8*i +: 8] = cs.flit[`ARCH_BITS-8*(i+1) +: 8];
-			end
-			if      (cs.aw_size == XSIZE_BYTE)  W_STRB[0] = 1'b1;
-			else if (cs.aw_size == XSIZE_HWORD) W_STRB[1:0] = 2'b1;
-			else if (cs.aw_size == XSIZE_WORD)  W_STRB[3:0] = 4'b1111;
-			else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-		end
-            
-                W_DATA = wr_data_flit;
-                
-                if (W_READY == 1'b1) begin
-                    next_state = RECEIVE_HEADER;
-                end
-            end
-*/
-///// DMA PATH ///////
-	   
+ 
             DMA_RECEIVE_ADDRESS: begin
                 if (dma_rcv_empty == 1'b0) begin
-                    dma_rcv_rdreq = 1'b1;
+					dma_rcv_rdreq = 1'b1;
                     ns.ar_prot = cs.ax_prot;
+					if (eth_dma == 0) begin
+						if (ARCH_BITS == 64) begin
+							ns.ar_size = XSIZE_DWORD;
+							ns.aw_size = XSIZE_DWORD;
+						end
+						else begin 
+							ns.ar_size = XSIZE_WORD;
+							ns.aw_size = XSIZE_WORD;
+						end
+		    		end 
+					else begin
+						ns.ar_size = XSIZE_WORD;
+						ns.aw_size = XSIZE_WORD;
+					end
                     if (cs.msg == DMA_TO_DEV || cs.msg == REQ_DMA_READ) begin
 						next_state = DMA_RECEIVE_READ_LENGTH;
                     	ns.ar_addr = dma_rcv_data_out[GLOB_PHYS_ADDR_BITS-1:0];
@@ -834,14 +534,6 @@ module noc2aximst
 						    end
                         end
 		    		end
-					if (eth_dma == 0) begin
-						if (ARCH_BITS == 64)  
-							ns.ar_size = XSIZE_DWORD;
-						else 
-							ns.ar_size = XSIZE_WORD;
-		    			end 
-						else
-							ns.ar_size = XSIZE_WORD;
 				end
 	   		end
 
@@ -883,56 +575,10 @@ module noc2aximst
 	                dma_snd_wrreq   = 1'b1; 
 			   	end
 		  	end
-/*
-          	DMA_SEND_DATA: begin
-
-           		if (dma_snd_full == 1'b1) 
-                    R_READY = 1'b0;
-                else begin
-                    R_READY = 1'b1;
-                    if (R_VALID == 1'b1) begin
-                        dma_snd_wrreq = 1'b1;
-
-						// Fix endianess
-						if (little_end  == 0) dma_rd_data_flit = R_DATA;
-						else begin
-							for (i = 0; i < (ARCH_BITS / 8); i = i + 1) begin
-								dma_rd_data_flit[8*i +: 8] = R_DATA[ARCH_BITS-8*(i+1) +: 8];
-							end
-						end
-
-                        if (R_LAST == 1'b1) begin
-                            if (cs.count == 0) begin 
-                                dma_snd_data_in = {PREAMBLE_TAIL, dma_rd_data_flit};
-                                next_state = RECEIVE_HEADER;
-                            end else begin
-                                dma_snd_data_in = {PREAMBLE_BODY, dma_rd_data_flit};
-
-                                if (cs.count > 255) begin
-                                      ns.ar_len = 255;
-                                      ns.count  = cs.count - 255; 
-                                end else begin 
-                                      ns.ar_len = cs.count; 
-                                      ns.count = 0; 
-                                end 
-                                
-								if 	(cs.ar_size == XSIZE_WORD)  	ns.ar_addr = cs.ar_addr + 1024;
-                                else if (cs.ar_size == XSIZE_DWORD) ns.ar_addr = cs.ar_addr + 2048; 
-
-                                ns.burst_flag = 1;		// Give the new address for the new burst
-                                next_state = DMA_READ_REQUEST;
-                            end  
-                         end else
-                            dma_snd_data_in = {PREAMBLE_BODY, dma_rd_data_flit};
-                    end
-                end
-            end 
-*/
 
           	DMA_SEND_DATA: begin
 
-				R_READY = 1'b0;
-				
+				R_READY = 1'b0;				
 				if (cs.sample_flag == 2'b01) begin
 					if (dma_snd_full == 1'b0) begin
 						ns.sample_flag = 2'b00;
@@ -941,7 +587,6 @@ module noc2aximst
 						
 					end
 				end
-					
 				else if (cs.sample_flag == 2'b10) begin
 					if (dma_snd_full == 1'b0) begin
 						ns.sample_flag = 2'b00;
@@ -969,14 +614,10 @@ module noc2aximst
                       	end						
 					end
 				end
-
-
                 else if (cs.sample_flag == 2'b00) begin
                     R_READY = 1'b1;
                     if (R_VALID == 1'b1) begin
-
 						ns.word_cnt = cs.word_cnt + 1;
-						
 						// Fix endianess
 						if (little_end  == 0)
 							ns.dma_noc_data[ARCH_BITS * cs.word_cnt +: ARCH_BITS] = R_DATA;
@@ -985,7 +626,6 @@ module noc2aximst
 								ns.dma_noc_data[ARCH_BITS * cs.word_cnt + 8*j +: 8] = R_DATA[ARCH_BITS-8*(j+1) +: 8];
 							end
 						end					
-						
 						dma_snd_data_in[DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] = ns.dma_noc_data;
 
 						if (R_LAST == 1'b0) begin
@@ -1049,7 +689,6 @@ module noc2aximst
 						ns.count = 0;
 					end
 					next_state = DMA_WRITE_REQUEST;
-
 				end
 		 	end
 
@@ -1213,28 +852,23 @@ module noc2aximst
 
 				W_VALID = 1'b0;
 				W_LAST  = 1'b0;
-
 				if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10) begin		// If something already prefetched
 					W_VALID = 1'b1;
-
 					if (cs.aw_len == 0 || cs.sample_flag == 2'b10) W_LAST = 1'b1;	// If end of burst or 1-beat transaction (aw_len is invalid)
-			
 					// Fix endianess
 					if (little_end  == 0) begin										// Use previously fetched flit with the word pointer
 						wr_data_flit = cs.dma_flit[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
-
-					end else begin
+					end 
+					else begin
 						for (j = 0; j < (ARCH_BITS / 8); j = j + 1) begin
 							wr_data_flit[8*j +: 8] = cs.dma_flit[ARCH_BITS * (cs.word_cnt + 1) -8*(j+1) +: 8];
 						end
 					end  
              
                		W_DATA = wr_data_flit;
-
 					if (W_READY == 1'b1) begin
 						ns.sample_flag = 2'b00;
 						ns.word_cnt = cs.word_cnt + 1;	// If we write - update the word pointer
-
 						if (cs.aw_len == 0) begin
 							if (cs.count == 0 || cs.sample_flag == 2'b10) // If end of burst or 1-beat transaction (aw_len/aw_count are invalid)
 								next_state = RECEIVE_HEADER;
@@ -1242,13 +876,16 @@ module noc2aximst
 								next_state = DMA_WRITE_REQUEST;
 								if (cs.count > 255) begin
                                 	ns.aw_len = 255;
-                                  	ns.count  = cs.count - 255; 
-                               	end else begin 
+                                  	ns.count  = cs.count - 255;
+                               	end 
+								else begin 
                                  	ns.aw_len = cs.count; 
                                    	ns.count = 0; 
                               	end 
-                    			if 		(cs.aw_size == XSIZE_WORD)  ns.aw_addr = cs.aw_addr + 4'b0100; // TODO: Verify this case with eth_dma
-                    			else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
+                    			if (cs.aw_size == XSIZE_WORD)  
+									ns.aw_addr = cs.aw_addr + 4'b0100; // TODO: Verify this case with eth_dma
+                    			else if (cs.aw_size == XSIZE_DWORD) 
+									ns.aw_addr = cs.aw_addr + 4'b1000;
 								//FIXME: case of using this
                     			//if (dma_rcv_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
                         		//	dma_rcv_rdreq = 1'b1;
@@ -1274,17 +911,16 @@ module noc2aximst
                 		end
 					end
 
-
-				end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin	// If no data has been prefetched and there is something available (FIRST WRITE TO BUS)
-
+				end 
+				else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin	// If no data has been prefetched and there is something available (FIRST WRITE TO BUS)
 					dma_rcv_rdreq = 1'b1;
 					ns.dma_flit = dma_rcv_data_out;
 
 					// Fix endianess
 					if (little_end  == 0) begin
 						wr_data_flit = ns.dma_flit[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
-
-					end else begin
+					end 
+					else begin
 						for (j = 0; j < (ARCH_BITS / 8); j = j + 1) begin	//TODO: Verify Ariane
 							wr_data_flit[8*j +: 8] = ns.dma_flit[ARCH_BITS * (cs.word_cnt + 1) -8*(j+1) +: 8];
 						end
@@ -1344,7 +980,8 @@ module noc2aximst
 					if (little_end  == 0) begin
 						wr_data_flit = cs.dma_flit[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
 
-					end else begin
+					end 
+					else begin
 						for (j = 0; j < (ARCH_BITS / 8); j = j + 1) begin	//TODO: Verify Ariane
 							wr_data_flit[8*j +: 8] = cs.dma_flit[ARCH_BITS * (cs.word_cnt + 1) -8*(j+1) +: 8];
 						end
@@ -1397,27 +1034,23 @@ module noc2aximst
 
 				W_VALID = 1'b0;
 				W_LAST  = 1'b0;
-
 				if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10) begin
 					W_VALID = 1'b1;
 					W_LAST = 1'b1;
-				
 					// Fix endianess
 					if (little_end  == 0) begin
 						wr_data_flit = cs.dma_flit[ARCH_BITS-1 : 0];
-
-					end else begin
+					end 
+					else begin
 						for (i = 0; i < (ARCH_BITS / 8); i = i + 1) begin
 							wr_data_flit[8*i +: 8] = cs.dma_flit[ARCH_BITS-8*(i+1) +: 8];
 						end
-
 					end
                
                		W_DATA = wr_data_flit;
 
 					if (W_READY == 1'b1) begin
 						ns.sample_flag = 2'b00;
-
 						if (cs.sample_flag == 2'b10) // If end of burst or 1-beat transaction (aw_len/aw_count are invalid)
 							next_state = RECEIVE_HEADER;
 						else begin
@@ -1430,11 +1063,8 @@ module noc2aximst
                         	//	ns.dma_flit = dma_rcv_data_out;
                         	//	ns.sample_flag = 2'b01;
                     		//end
-
 						end					
-
 					end
-
 
 				end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin	// If no data has been prefetched and there is something available
 					W_VALID = 1'b1;
@@ -1451,16 +1081,14 @@ module noc2aximst
 					// Fix endianess
 					if (little_end  == 0) begin
 						wr_data_flit = ns.dma_flit[ARCH_BITS-1 : 0];
-
-					end else begin
+					end 
+					else begin
 						for (i = 0; i < (ARCH_BITS / 8); i = i + 1) begin
 							wr_data_flit[8*i +: 8] = ns.dma_flit[ARCH_BITS-8*(i+1) +: 8];
 						end
 					end
 
                		W_DATA = wr_data_flit;
-					
-
 					if (W_READY == 1'b1) begin
 						ns.sample_flag = 2'b00;
 
@@ -1530,299 +1158,6 @@ module noc2aximst
 				   	W_DATA = ns.dma_flit;				
 				end
             end
-
-
-/*
-
-           DMA_WRITE_DATA_COH: begin
-
-				W_VALID = 1'b0;
-				W_LAST  = 1'b0;
-
-				if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10) begin
-					W_VALID = 1'b1;
-					W_LAST = 1'b1;
-				
-					// Fix endianess
-					if (little_end  == 0) begin
-						wr_data_flit = cs.dma_flit[ARCH_BITS-1 : 0];
-
-					end else begin
-						for (i = 0; i < (ARCH_BITS / 8); i = i + 1) begin
-							wr_data_flit[8*i +: 8] = cs.dma_flit[ARCH_BITS-8*(i+1) +: 8];
-						end
-
-					end
-               
-               		W_DATA = wr_data_flit;
-
-					if (W_READY == 1'b1) begin
-						ns.sample_flag = 2'b00;
-
-						if (cs.sample_flag == 2'b10) // If end of burst or 1-beat transaction (aw_len/aw_count are invalid)
-							next_state = RECEIVE_HEADER;
-						else begin
-							next_state = DMA_WRITE_REQUEST;
-                    		if 		(cs.aw_size == XSIZE_WORD)  ns.aw_addr = cs.aw_addr + 4'b0100; // TODO: Verify this case with eth_dma
-                    		else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
-
-                    		//if (dma_rcv_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
-                        	//	dma_rcv_rdreq = 1'b1;
-                        	//	ns.dma_flit = dma_rcv_data_out;
-                        	//	ns.sample_flag = 2'b01;
-                    		//end
-
-						end					
-
-					end
-
-
-				end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin	// If no data has been prefetched and there is something available
-					W_VALID = 1'b1;
-					W_LAST = 1'b1;
-	
-					if (dma_preamble == PREAMBLE_TAIL) begin						
-						ns.sample_flag = 2'b10;
-					end else
-						ns.sample_flag = 2'b01;
-					
-					dma_rcv_rdreq = 1'b1;
-					ns.dma_flit = dma_rcv_data_out;
-
-					// Fix endianess
-					if (little_end  == 0) begin
-						wr_data_flit = ns.dma_flit[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
-
-					end else begin
-						for (j = 0; j < (ARCH_BITS / 8); j = j + 1) begin
-							wr_data_flit[ARCH_BITS * cs.word_cnt + 8*j +: 8] = ns.dma_flit[ARCH_BITS * (cs.word_cnt + 1) -8*(j+1) +: 8];
-						end
-					end
-
-
-               		W_DATA = wr_data_flit;
-
-					if (W_READY == 1'b1) begin
-						ns.sample_flag = 2'b00;
-
-						if (dma_preamble == PREAMBLE_TAIL)
-							next_state = RECEIVE_HEADER;
-
-						else begin
-							next_state = DMA_WRITE_REQUEST;
-                    		if 	(cs.aw_size == XSIZE_WORD)  	ns.aw_addr = cs.aw_addr + 4'b0100; // TODO: Verify this case with eth_dma
-                    		else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
-
-						end					
-
-
-					end
-				end
-
-            end
-*/
-
-           /* DMA_WRITE_DATA: begin
-
-				W_VALID = 1'b1;
-				W_LAST  = 1'b0;
-
-				if (cs.sample_flag == 2'b01) begin		
-					if (cs.aw_len == 0) W_LAST = 1'b1;
-			
-					// Fix endianess
-					if (little_end  == 0) begin
-						wr_data_flit = cs.dma_flit[`ARCH_BITS-1 : 0];
-						if 		(cs.aw_size == XSIZE_WORD)  W_STRB[`AW-1:`AW-4] = 4'b1111;
-						else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-
-					end else begin
-						for (i = 0; i < (`ARCH_BITS / 8); i = i + 1) begin
-							wr_data_flit[8*i +: 8] = cs.dma_flit[`ARCH_BITS-8*(i+1) +: 8];
-						end
-						if      (cs.aw_size == XSIZE_WORD)  W_STRB[3:0] = 4'b1111;
-						else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-					end
-               
-               		W_DATA = wr_data_flit;
-
-					if (W_READY == 1'b1) begin
-						ns.sample_flag = 2'b00;
-
-						if (cs.aw_len == 0) begin
-							if (cs.count == 0) 
-								next_state = RECEIVE_HEADER;
-							else begin
-								next_state = DMA_WRITE_REQUEST;
-								if (cs.count > 255) begin
-                                	ns.aw_len = 255;
-                                  	ns.count  = cs.count - 255; 
-                               	end else begin 
-                                 	ns.aw_len = cs.count; 
-                                   	ns.count = 0; 
-                              	end 
-                    			if 		(cs.aw_size == XSIZE_WORD)  ns.aw_addr = cs.aw_addr + 4'b0100;
-                    			else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
-
-                    			if (dma_rcv_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
-                        			dma_rcv_rdreq = 1'b1;
-                        			ns.flit = dma_rcv_data_out;
-                        			ns.sample_flag = 2'b01;
-                    			end
-
-							end					
-						end else begin
-                    		if (dma_rcv_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
-                        		dma_rcv_rdreq = 1'b1;
-                        		ns.dma_flit = dma_rcv_data_out;
-                        		ns.sample_flag = 2'b01;
-                    		end				
-							ns.aw_len = cs.aw_len - 1;
-                		end
-					end
-
-
-		end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin
-
-			if (cs.aw_len == 0) W_LAST = 1'b1;
-			dma_rcv_rdreq = 1'b1;
-			ns.flit = dma_rcv_data_out;
-
-
-			if (little_end  == 0) begin
-				wr_data_flit = ns.flit[`ARCH_BITS-1 : 0];
-				if 	(cs.aw_size == XSIZE_WORD)  W_STRB[`AW-1:`AW-4] = 4'b1111;
-				else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-
-			end else begin
-				for (i = 0; i < (`ARCH_BITS / 8); i = i + 1) begin
-					wr_data_flit[8*i +: 8] = ns.flit[`ARCH_BITS-8*(i+1) +: 8];
-				end
-				if      (cs.aw_size == XSIZE_WORD)  W_STRB[3:0] = 4'b1111;
-				else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-			end
-
-               		W_DATA = wr_data_flit;
-
-			if (W_READY == 1'b1) begin
-				ns.sample_flag = 2'b00;
-
-				if (cs.aw_len == 0) begin
-					if (cs.count == 0) begin
-						next_state = RECEIVE_HEADER;
-					end else begin
-						next_state = DMA_WRITE_REQUEST;
-						if (cs.count > 255) begin
-                                      			ns.aw_len = 255;
-                                      			ns.count  = cs.count - 255; 
-                                		end else begin 
-                                      			ns.aw_len = cs.count; 
-                                      			ns.count = 0; 
-                               			end 
-                    				if 	(cs.aw_size == XSIZE_WORD)  ns.aw_addr = cs.aw_addr + 4'b0100;
-                    				else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
-
-                    				if (dma_rcv_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
-                        				dma_rcv_rdreq = 1'b1;
-                        				ns.flit = dma_rcv_data_out;
-                        				ns.sample_flag = 2'b01;
-                    				end
-					end					
-					
-				end else begin
-                    			if (dma_rcv_empty == 1'b0) begin		// If the NoC queue is available - read the first data to be written
-                        			dma_rcv_rdreq = 1'b1;
-                        			ns.flit = dma_rcv_data_out;
-                        			ns.sample_flag = 2'b01;
-                    			end				
-					ns.aw_len = cs.aw_len - 1;
-                		end
-			end
-		end
-
-            end*/
-
-/*
-            DMA_WRITE_DATA2: begin
-
-		W_VALID = 1'b0;
-		W_LAST  = 1'b0;
-
-		if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10) begin
-			W_VALID = 1'b1;
-			W_LAST  = 1'b1;
-
-			// Fix endianess
-			if (little_end  == 0) begin
-				wr_data_flit = cs.flit[`ARCH_BITS-1 : 0];
-				if 	(cs.aw_size == XSIZE_WORD)  W_STRB[`AW-1:`AW-4] = 4'b1111;
-				else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-
-			end else begin
-				for (i = 0; i < (`ARCH_BITS / 8); i = i + 1) begin
-					wr_data_flit[8*i +: 8] = cs.flit[`ARCH_BITS-8*(i+1) +: 8];
-				end
-				if      (cs.aw_size == XSIZE_WORD)  W_STRB[3:0] = 4'b1111;
-				else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-			end
-                
-               		W_DATA = wr_data_flit;
-
-
-
-
-			if (W_READY == 1'b1) begin
-				ns.sample_flag == 2'b00;
-				if (cs.sample_flag == 2'b01) begin
-                    			if 	(cs.aw_size == XSIZE_WORD)  ns.aw_addr = cs.aw_addr + 4'b0100;
-                    			else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
-                    			next_state = DMA_WRITE_REQUEST;
-				else 
-					next_state = RECEIVE_HEADER;
-                	end
-		end 
-
-
-		end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin
-			W_VALID = 1'b1;
-			W_LAST  = 1'b1;
-			dma_rcv_rdreq = 1'b1;
-			ns.flit = dma_rcv_data_out;
-
-			// Fix endianess
-			if (little_end  == 0) begin
-				wr_data_flit = ns.flit[`ARCH_BITS-1 : 0];
-				if 	(cs.aw_size == XSIZE_WORD)  W_STRB[`AW-1:`AW-4] = 4'b1111;
-				else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-
-			end else begin
-				for (i = 0; i < (`ARCH_BITS / 8); i = i + 1) begin
-					wr_data_flit[8*i +: 8] = ns.flit[`ARCH_BITS-8*(i+1) +: 8];
-				end
-				if      (cs.aw_size == XSIZE_WORD)  W_STRB[3:0] = 4'b1111;
-				else if (cs.aw_size == XSIZE_DWORD) W_STRB = 8'b11111111;
-			end
-
-               		W_DATA = wr_data_flit;
-
-			if (W_READY == 1'b1) begin
-				ns.sample_flag == 2'b00;
-				if (dma_preamble == PREAMBLE_BODY) begin
-                    			if 	(cs.aw_size == XSIZE_WORD)  ns.aw_addr = cs.aw_addr + 4'b0100;
-                    			else if (cs.aw_size == XSIZE_DWORD) ns.aw_addr = cs.aw_addr + 4'b1000;
-                    			next_state = DMA_WRITE_REQUEST;
-
-				else if (dma_preamble == PREAMBLE_TAIL)
-					next_state = RECEIVE_HEADER;
-                	end
-			else begin
-				if 	(dma_preamble == PREAMBLE_BODY) ns.sample_flag = 2'b01;
-                        	else if (dma_preamble == PREAMBLE_TAIL) ns.sample_flag = 2'b10;
-			end
-		end
-
-            end
-*/
         endcase
     end 
 
@@ -1892,9 +1227,7 @@ module noc2aximst
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_left;
 
 
-
-    always @(*) begin
-
+    always_comb begin
 		input_msg_type = pad_coherence_req_data_out[this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1:this_coh_flit_size - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
 
 		if (input_msg_type == AHB_RD) 											msg_type = RSP_AHB_RD; 
@@ -1932,7 +1265,6 @@ module noc2aximst
 
     end
 
-
     // Create Response Header (DMA)
     logic [	   `MSG_TYPE_WIDTH-1 : 0] input_msg_type_dma;
     logic [	   `MSG_TYPE_WIDTH-1 : 0] msg_type_dma;
@@ -1943,8 +1275,7 @@ module noc2aximst
     logic [`NEXT_ROUTING_WIDTH-1 : 0] go_left_dma;
 
 
-
-    always @(*) begin
+    always_comb begin
 
 		input_msg_type_dma = pad_dma_rcv_data_out[DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - 1:DMA_NOC_FLIT_SIZE - `PREAMBLE_WIDTH - 4*GLOB_YX_WIDTH - `MSG_TYPE_WIDTH];
 
@@ -1986,7 +1317,7 @@ module noc2aximst
     end    
 
     // Register Response Header
-    always @(posedge ACLK, negedge ARESETn) begin
+    always_ff @(posedge ACLK, negedge ARESETn) begin
         if (ARESETn == 1'b0) begin
 			header_reg <= 0;
 			dma_header_reg <= 0;
