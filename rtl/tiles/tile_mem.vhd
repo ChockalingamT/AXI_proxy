@@ -235,13 +235,8 @@ architecture rtl of tile_mem is
   -- Bus
   signal ahbsi : ahb_slv_in_type;
   signal ahbso : ahb_slv_out_vector;
-  signal ahbmi : ahb_mst_in_type;
-  signal ahbmo : ahb_mst_out_vector;
   signal apbi  : apb_slv_in_type;
   signal apbo  : apb_slv_out_vector;
-
-  signal ctrl_ahbmi : ahb_mst_in_type;
-  signal ctrl_ahbmo : ahb_mst_out_vector;
 
   -- Mon
   signal mon_mem_int    : monitor_mem_type;
@@ -484,27 +479,6 @@ architecture rtl of tile_mem is
   attribute mark_debug of remote_ahbm_snd_wrreq : signal is "true"; 
   attribute mark_debug of remote_ahbm_snd_data_in : signal is "true"; 
   attribute mark_debug of remote_ahbm_snd_full : signal is "true";
-
-  attribute mark_debug of  mst1_aw_id       : signal is "true";
-  attribute mark_debug of  mst1_aw_addr     : signal is "true";
-  attribute mark_debug of  mst1_aw_len      : signal is "true";
-  attribute mark_debug of  mst1_aw_size     : signal is "true";
-  attribute mark_debug of  mst1_aw_burst    : signal is "true";
-  attribute mark_debug of  mst1_aw_lock     : signal is "true";
-  attribute mark_debug of  mst1_aw_cache    : signal is "true";
-  attribute mark_debug of  mst1_aw_prot     : signal is "true";
-  attribute mark_debug of  mst1_aw_qos      : signal is "true";
-  attribute mark_debug of  mst1_aw_atop     : signal is "true";
-  attribute mark_debug of  mst1_aw_region   : signal is "true";
-  attribute mark_debug of  mst1_aw_user     : signal is "true";
-  attribute mark_debug of  mst1_aw_valid    : signal is "true";
-  attribute mark_debug of  mst1_aw_ready    : signal is "true";
-  attribute mark_debug of  mst1_w_data      : signal is "true";
-  attribute mark_debug of  mst1_w_strb      : signal is "true";
-  attribute mark_debug of  mst1_w_last      : signal is "true";
-  attribute mark_debug of  mst1_w_user      : signal is "true";
-  attribute mark_debug of  mst1_w_valid     : signal is "true";
-  attribute mark_debug of mst1_w_ready     : signal is "true";
   
   attribute mark_debug of  mst0_aw_id       : signal is "true";
   attribute mark_debug of  mst0_aw_addr     : signal is "true";
@@ -527,6 +501,48 @@ architecture rtl of tile_mem is
   attribute mark_debug of  mst0_w_valid     : signal is "true";
   attribute mark_debug of mst0_w_ready     : signal is "true";
 
+  attribute mark_debug of  mst1_aw_id       : signal is "true";
+  attribute mark_debug of  mst1_aw_addr     : signal is "true";
+  attribute mark_debug of  mst1_aw_len      : signal is "true";
+  attribute mark_debug of  mst1_aw_size     : signal is "true";
+  attribute mark_debug of  mst1_aw_burst    : signal is "true";
+  attribute mark_debug of  mst1_aw_lock     : signal is "true";
+  attribute mark_debug of  mst1_aw_cache    : signal is "true";
+  attribute mark_debug of  mst1_aw_prot     : signal is "true";
+  attribute mark_debug of  mst1_aw_qos      : signal is "true";
+  attribute mark_debug of  mst1_aw_atop     : signal is "true";
+  attribute mark_debug of  mst1_aw_region   : signal is "true";
+  attribute mark_debug of  mst1_aw_user     : signal is "true";
+  attribute mark_debug of  mst1_aw_valid    : signal is "true";
+  attribute mark_debug of  mst1_aw_ready    : signal is "true";
+  attribute mark_debug of  mst1_w_data      : signal is "true";
+  attribute mark_debug of  mst1_w_strb      : signal is "true";
+  attribute mark_debug of  mst1_w_last      : signal is "true";
+  attribute mark_debug of  mst1_w_user      : signal is "true";
+  attribute mark_debug of  mst1_w_valid     : signal is "true";
+  attribute mark_debug of mst1_w_ready     : signal is "true";
+  
+  attribute mark_debug of  mst2_aw_id       : signal is "true";
+  attribute mark_debug of  mst2_aw_addr     : signal is "true";
+  attribute mark_debug of  mst2_aw_len      : signal is "true";
+  attribute mark_debug of  mst2_aw_size     : signal is "true";
+  attribute mark_debug of  mst2_aw_burst    : signal is "true";
+  attribute mark_debug of  mst2_aw_lock     : signal is "true";
+  attribute mark_debug of  mst2_aw_cache    : signal is "true";
+  attribute mark_debug of  mst2_aw_prot     : signal is "true";
+  attribute mark_debug of  mst2_aw_qos      : signal is "true";
+  attribute mark_debug of  mst2_aw_atop     : signal is "true";
+  attribute mark_debug of  mst2_aw_region   : signal is "true";
+  attribute mark_debug of  mst2_aw_user     : signal is "true";
+  attribute mark_debug of  mst2_aw_valid    : signal is "true";
+  attribute mark_debug of  mst2_aw_ready    : signal is "true";
+  attribute mark_debug of  mst2_w_data      : signal is "true";
+  attribute mark_debug of  mst2_w_strb      : signal is "true";
+  attribute mark_debug of  mst2_w_last      : signal is "true";
+  attribute mark_debug of  mst2_w_user      : signal is "true";
+  attribute mark_debug of  mst2_w_valid     : signal is "true";
+  attribute mark_debug of  mst2_w_ready     : signal is "true";
+  
   attribute mark_debug of coherence_req_rdreq        : signal is "true"; 
   attribute mark_debug of coherence_req_data_out     : signal is "true"; 
   attribute mark_debug of coherence_req_empty        : signal is "true"; 
@@ -913,26 +929,9 @@ begin
   s_axi_awid(7 downto 4) <= (others => '0');
   s_axi_arid(7 downto 4) <= (others => '0');
 
-  no_axi_crossbar_gen: if this_has_ddr = 0 generate
---    ahbsi <= ahbs_in_none;
-    ahbmi <= ahbm_in_none;
-  end generate no_axi_crossbar_gen;
-
-
   -----------------------------------------------------------------------
   ---  Drive unused bus ports
   -----------------------------------------------------------------------
-
-  no_hmst_gen : for i in 3 to NAHBMST-1 generate
-    ahbmo(i) <= ahbm_none;
-  end generate;
-
---  no_hslv_gen : for i in 0 to NAHBSLV - 1 generate
---    no_hslv_i_gen : if this_local_ahb_en(i) = '0' generate
---      ahbso(i) <= ahbs_none;
---    end generate no_hslv_i_gen;
---  end generate;
-
   no_pslv_gen : for i in 0 to NAPBSLV - 1 generate
     no_pslv_i_gen : if this_local_apb_en(i) = '0' generate
       apbo(i) <= apb_none;
@@ -1029,8 +1028,7 @@ begin
 
   -- FROM NoC
   no_cache_coherence : if CFG_LLC_ENABLE = 0 generate
-
-    -- Hendle CPU coherent requests and accelerator non-coherent DMA
+    -- Handle CPU coherent requests and accelerator non-coherent DMA
     noc2aximst_1 : noc2aximst
       generic map (
         tech        		=> CFG_FABTECH,
@@ -1091,18 +1089,15 @@ begin
         coherence_rsp_snd_wrreq 	=> coherence_rsp_snd_wrreq,
         coherence_rsp_snd_data_in 	=> coherence_rsp_snd_data_in,
         coherence_rsp_snd_full 		=> coherence_rsp_snd_full,
-
         dma_rcv_rdreq             	=> dma_rcv_rdreq,
         dma_rcv_data_out          	=> dma_rcv_data_out,
         dma_rcv_empty             	=> dma_rcv_empty,
         dma_snd_wrreq             	=> dma_snd_wrreq,
         dma_snd_data_in           	=> dma_snd_data_in,
         dma_snd_full              	=> dma_snd_full
-
       );
 
     -- No LLC wrapper
-    ahbmo(2)      <= ahbm_none;
     mon_cache_int <= monitor_cache_none;
 
     -- FPGA-based memory link is not supported when ESP cahces are not enabled
@@ -1277,7 +1272,6 @@ begin
         coherence_rsp_snd_wrreq   => open,
         coherence_rsp_snd_data_in => open,
         coherence_rsp_snd_full    => '0',
-
         dma_rcv_rdreq             	=> dma_rcv_rdreq,
         dma_rcv_data_out          	=> dma_rcv_data_out,
         dma_rcv_empty             	=> dma_rcv_empty,
@@ -1451,7 +1445,6 @@ begin
 
     esplink_proxy_gen: if this_has_ddr /= 0 generate
     -- Handle JTAG or EDCL requests to memory
-
     noc2aximst_2 : noc2aximst
       generic map (
         tech        => CFG_FABTECH,

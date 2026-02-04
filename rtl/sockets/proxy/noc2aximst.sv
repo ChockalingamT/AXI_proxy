@@ -13,7 +13,6 @@ import noc2aximst_pkg::*;
 `define NEXT_ROUTING_WIDTH 5
 
 module noc2aximst 
-
 #(
     parameter integer tech        			= 0,
     parameter integer mst_index	  			= 0,
@@ -364,7 +363,7 @@ module noc2aximst
             WRITE_REQUEST: begin			// In this state AW_VALID is set and waiting for AW_READY
 
 				if (AW_READY == 1'b1) begin		// If AW_READY = 1, the Address transaction completes and we can move to Data transactions
-                    if (cs.msg == AHB_WR && ARCH_BITS == 64 && eth_dma == 1) // FIXME: eth_dma == 1 is not necessary
+                    if (cs.msg == AHB_WR && ARCH_BITS == 64) 
                         next_state = WRITE_DATA_EDCL;
                     else 
                         next_state = WRITE_DATA;
