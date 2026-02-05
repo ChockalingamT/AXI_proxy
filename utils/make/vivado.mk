@@ -107,7 +107,7 @@ endif
 	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.tcl; then \
 		echo $(SPACES)"INFO including MIG IP"; \
 		mkdir -p vivado/mig; \
-		cp $(ESP_ROOT)/constraints/$(BOARD)/mig.tcl ./vivado/mig; \
+		cp $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig.tcl ./vivado/mig; \
 		if test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.csv; then \
 			cp $(ESP_ROOT)/constraints/$(BOARD)/mig.csv ./vivado/mig; \
 		fi; \

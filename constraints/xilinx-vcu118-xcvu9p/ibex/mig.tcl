@@ -4,7 +4,10 @@ create_ip -name ddr4 -vendor xilinx.com -library ip -version 2.2 -module_name mi
 
 set_property -dict [list \
 			CONFIG.C0_CLOCK_BOARD_INTERFACE {default_250mhz_clk1} \
+			CONFIG.C0.DDR4_AxiSelection {true} \
 			CONFIG.C0.DDR4_TimePeriod {1600} \
+            CONFIG.C0.DDR4_AxiDataWidth {32} \
+            CONFIG.C0.DDR4_AxiIDWidth {8} \
 			CONFIG.C0.DDR4_InputClockPeriod {4000} \
 			CONFIG.C0.DDR4_CLKOUT0_DIVIDE {8} \
 			CONFIG.C0.DDR4_MemoryPart {MT40A256M16GE-083E} \

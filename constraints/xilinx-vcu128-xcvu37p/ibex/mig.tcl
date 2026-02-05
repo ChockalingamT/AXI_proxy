@@ -5,6 +5,9 @@ create_ip -name ddr4 -vendor xilinx.com -library ip -version 2.2 -module_name mi
 set_property -dict [list \
 			CONFIG.C0_CLOCK_BOARD_INTERFACE {default_100mhz_clk} \
 			CONFIG.C0.DDR4_Clamshell {true} \
+			CONFIG.C0.DDR4_AxiSelection {true} \
+            CONFIG.C0.DDR4_AxiDataWidth {32} \
+            CONFIG.C0.DDR4_AxiIDWidth {8} \
 			CONFIG.C0.DDR4_TimePeriod {1500} \
 			CONFIG.C0.DDR4_InputClockPeriod {10000} \
 			CONFIG.C0.DDR4_CLKOUT0_DIVIDE {9} \

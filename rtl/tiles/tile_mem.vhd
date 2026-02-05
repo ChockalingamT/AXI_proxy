@@ -56,42 +56,9 @@ entity tile_mem is
     dco_clk_div2_90    : out std_ulogic;
     tile_rstn_out          : out std_ulogic;
     phy_rstn           : out std_ulogic;
-    s_axi_awid         : out   std_logic_vector(7 downto 0);
-    s_axi_awaddr       : out   std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-    s_axi_awlen        : out   std_logic_vector(7 downto 0);
-    s_axi_awsize       : out   std_logic_vector(2 downto 0);
-    s_axi_awburst      : out   std_logic_vector(1 downto 0);
-    s_axi_awlock       : out   std_logic;
-    s_axi_awcache      : out   std_logic_vector(3 downto 0);
-    s_axi_awprot       : out   std_logic_vector(2 downto 0);
-    s_axi_awvalid      : out   std_logic;
-    s_axi_awready      : in    std_logic;
-    s_axi_wdata        : out   std_logic_vector(AXIDW-1 downto 0);
-    s_axi_wstrb        : out   std_logic_vector((AXIDW/8)-1 downto 0);
-    s_axi_wlast        : out   std_logic;
-    s_axi_wvalid       : out   std_logic;
-    s_axi_wready       : in    std_logic;
-    s_axi_bid          : in    std_logic_vector(7 downto 0);
-    s_axi_bresp        : in    std_logic_vector(1 downto 0);
-    s_axi_bvalid       : in    std_logic;
-    s_axi_bready       : out   std_logic;
-    s_axi_arid         : out   std_logic_vector(7 downto 0);
-    s_axi_araddr       : out   std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-    s_axi_arlen        : out   std_logic_vector(7 downto 0);
-    s_axi_arsize       : out   std_logic_vector(2 downto 0);
-    s_axi_arburst      : out   std_logic_vector(1 downto 0);
-    s_axi_arlock       : out   std_logic;
-    s_axi_arcache      : out   std_logic_vector(3 downto 0);
-    s_axi_arprot       : out   std_logic_vector(2 downto 0);
-    s_axi_arvalid      : out   std_logic;
-    s_axi_arready      : in    std_logic;
-    s_axi_rid          : in    std_logic_vector(7 downto 0);
-    s_axi_rdata        : in    std_logic_vector(AXIDW-1 downto 0);
-    s_axi_rresp        : in    std_logic_vector(1 downto 0);
-    s_axi_rlast        : in    std_logic;
-    s_axi_rvalid       : in    std_logic;
-    s_axi_rready       : out   std_logic;
-    -- FPGA proxy memory link (this_has_ddr -> 0)
+    ddr_axi_si         : out   axi_mosi_type;
+    ddr_axi_so         : in    axi_somi_type;
+	-- FPGA proxy memory link (this_has_ddr -> 0)
     fpga_data_in       : in  std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_data_out      : out std_logic_vector(CFG_MEM_LINK_BITS - 1 downto 0);
     fpga_oen           : out std_ulogic;
@@ -449,7 +416,6 @@ architecture rtl of tile_mem is
   signal rom_r_user       : std_logic_vector(3 downto 0);
   signal rom_r_valid      : std_logic;
   signal rom_r_ready      : std_logic;
-
 
   signal dram_aw_qos      : std_logic_vector(3 downto 0);
   signal dram_aw_atop     : std_logic_vector(5 downto 0);
@@ -878,56 +844,54 @@ begin
       rom_r_valid 	=> '0',
       rom_r_ready 	=> rom_r_ready,
 
-      dram_aw_id 	=> s_axi_awid(3 downto 0),
-      dram_aw_addr 	=> s_axi_awaddr,
-      dram_aw_len 	=> s_axi_awlen,
-      dram_aw_size 	=> s_axi_awsize,
-      dram_aw_burst 	=> s_axi_awburst,
-      dram_aw_lock 	=> s_axi_awlock,
-      dram_aw_cache 	=> s_axi_awcache,
-      dram_aw_prot 	=> s_axi_awprot,
-      dram_aw_qos 	=> dram_aw_qos,
-      dram_aw_atop 	=> dram_aw_atop,
-      dram_aw_region 	=> dram_aw_region,
-      dram_aw_user 	=> dram_aw_user,
-      dram_aw_valid 	=> s_axi_awvalid,
-      dram_aw_ready 	=> s_axi_awready,
-      dram_w_data 	=> s_axi_wdata,
-      dram_w_strb 	=> s_axi_wstrb,
-      dram_w_last 	=> s_axi_wlast,
-      dram_w_user 	=> dram_w_user,
-      dram_w_valid 	=> s_axi_wvalid,
-      dram_w_ready 	=> s_axi_wready,
-      dram_b_id 	=> s_axi_bid(3 downto 0),
-      dram_b_resp 	=> s_axi_bresp,
+      dram_aw_id 	=> ddr_axi_si.aw.id(3 downto 0),
+      dram_aw_addr 	=> ddr_axi_si.aw.addr,
+      dram_aw_len 	=> ddr_axi_si.aw.len,
+      dram_aw_size 	=> ddr_axi_si.aw.size,
+      dram_aw_burst => ddr_axi_si.aw.burst,
+      dram_aw_lock 	=> ddr_axi_si.aw.lock,
+      dram_aw_cache => ddr_axi_si.aw.cache,
+      dram_aw_prot 	=> ddr_axi_si.aw.prot,
+      dram_aw_qos 	=> ddr_axi_si.aw.qos,
+      dram_aw_atop 	=> ddr_axi_si.aw.atop,
+      dram_aw_region => ddr_axi_si.aw.region,
+      dram_aw_user 	 => ddr_axi_si.aw.user(3 downto 0),
+      dram_aw_valid	=> ddr_axi_si.aw.valid,
+      dram_aw_ready	=> ddr_axi_so.aw.ready,
+      dram_w_data 	=> ddr_axi_si.w.data,
+      dram_w_strb 	=> ddr_axi_si.w.strb,
+      dram_w_last 	=> ddr_axi_si.w.last,
+      dram_w_user 	=> ddr_axi_si.w.user(3 downto 0),
+      dram_w_valid 	=> ddr_axi_si.w.valid,
+      dram_w_ready 	=> ddr_axi_so.w.ready,
+      dram_b_id 	=> ddr_axi_so.b.id(3 downto 0),
+      dram_b_resp 	=> ddr_axi_so.b.resp,
       dram_b_user 	=> dram_b_user,
-      dram_b_valid 	=> s_axi_bvalid,
-      dram_b_ready 	=> s_axi_bready,
-      dram_ar_id 	=> s_axi_arid(3 downto 0),
-      dram_ar_addr 	=> s_axi_araddr,
-      dram_ar_len 	=> s_axi_arlen,
-      dram_ar_size 	=> s_axi_arsize,
-      dram_ar_burst 	=> s_axi_arburst,
-      dram_ar_lock 	=> s_axi_arlock,
-      dram_ar_cache 	=> s_axi_arcache,
-      dram_ar_prot 	=> s_axi_arprot,
-      dram_ar_qos 	=> dram_ar_qos,
-      dram_ar_region 	=> dram_ar_region,
-      dram_ar_user 	=> dram_ar_user,
-      dram_ar_valid 	=> s_axi_arvalid,
-      dram_ar_ready 	=> s_axi_arready,
-      dram_r_id 	=> s_axi_rid(3 downto 0),
-      dram_r_data 	=> s_axi_rdata,
-      dram_r_resp 	=> s_axi_rresp,
-      dram_r_last 	=> s_axi_rlast,
+      
+	  dram_b_valid 	=> ddr_axi_so.b.valid,
+      dram_b_ready 	=> ddr_axi_si.b.ready,
+      dram_ar_id 	=> ddr_axi_si.ar.id(3 downto 0),
+      dram_ar_addr 	=> ddr_axi_si.ar.addr,
+      dram_ar_len 	=> ddr_axi_si.ar.len,
+      dram_ar_size 	=> ddr_axi_si.ar.size,
+      dram_ar_burst	=> ddr_axi_si.ar.burst,
+      dram_ar_lock 	=> ddr_axi_si.ar.lock,
+      dram_ar_cache => ddr_axi_si.ar.cache,
+      dram_ar_prot 	=> ddr_axi_si.ar.prot,
+      dram_ar_qos 	=> ddr_axi_si.ar.qos,
+      dram_ar_region => ddr_axi_si.ar.region,
+      dram_ar_user 	=> ddr_axi_si.ar.user(3 downto 0),
+      dram_ar_valid	=> ddr_axi_si.ar.valid,
+      dram_ar_ready => ddr_axi_so.ar.ready,
+      dram_r_id 	=> ddr_axi_so.r.id(3 downto 0),
+      dram_r_data 	=> ddr_axi_so.r.data,
+      dram_r_resp 	=> ddr_axi_so.r.resp,
+      dram_r_last 	=> ddr_axi_so.r.last,
       dram_r_user 	=> dram_r_user,
-      dram_r_valid 	=> s_axi_rvalid,
-      dram_r_ready 	=> s_axi_rready
+      dram_r_valid 	=> ddr_axi_so.r.valid,
+      dram_r_ready 	=> ddr_axi_si.r.ready
     );
   end generate axi_crossbar_gen;
-
-  s_axi_awid(7 downto 4) <= (others => '0');
-  s_axi_arid(7 downto 4) <= (others => '0');
 
   -----------------------------------------------------------------------
   ---  Drive unused bus ports
@@ -937,25 +901,6 @@ begin
       apbo(i) <= apb_none;
     end generate no_pslv_i_gen;
   end generate no_pslv_gen;
-
-  -----------------------------------------------------------------------------
-  -- Local devices
-  -----------------------------------------------------------------------------
-
-  -- DDR Controller
---  ddr_gen: if this_has_ddr = 1 generate
---    ddr_ahbso_gen: process (ddr_ahbso, this_ddr_hconfig) is
---    begin  -- process ddr_ahbso_gen
---      ahbso(0)         <= ddr_ahbso;
---      ahbso(0).hconfig <= this_ddr_hconfig;
---    end process ddr_ahbso_gen;
---  end generate ddr_gen;
-
---  fpga_mem_gen: if this_has_ddr = 0 generate
---    ahbso(0) <= ahbs_none;
---  end generate fpga_mem_gen;
-
---  ddr_ahbsi <= ahbsi;
 
   -----------------------------------------------------------------------------
   -- Services

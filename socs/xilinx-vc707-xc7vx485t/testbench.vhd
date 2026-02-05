@@ -144,7 +144,7 @@ begin
   switch <= (others => '0');
 
 
-  top_1 : entity work.top
+  soc_inst : entity work.top
     generic map (
       SIMULATION      => SIMULATION)
     port map (
