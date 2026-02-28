@@ -1,6 +1,7 @@
 // Copyright (c) 2011-2026 Columbia University, System Level Design Group
 // SPDC-License-Identifier: Apache-2.0
 
+`timescale 1ns / 1ps
 
 package noc2aximst_pkg;
 

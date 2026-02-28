@@ -99,7 +99,7 @@ module noc2aximst
 	assign pad_coherence_req_data_out = {this_noc_flit_pad, coherence_req_data_out};
 
 
-	logic [MAX_NOC_FLIT_SIZE-DMA_NOC_FLIT_SIZE: 0] dma_noc_flit_pad;
+	logic [MAX_NOC_FLIT_SIZE-DMA_NOC_FLIT_SIZE : 0] dma_noc_flit_pad;
 	assign dma_noc_flit_pad = 0;
 	logic [MAX_NOC_FLIT_SIZE-1 : 0] pad_dma_rcv_data_out;
 	assign pad_dma_rcv_data_out = {dma_noc_flit_pad, dma_rcv_data_out};
@@ -107,7 +107,7 @@ module noc2aximst
 
     logic [this_coh_flit_size-1  : 0] header;
 	logic [this_coh_flit_size-1  : 0] header_reg;
-    (* mark_debug = "true" *) logic sample_header;
+    logic sample_header;
 
 
     logic [DMA_NOC_FLIT_SIZE-1 : 0] dma_header;
@@ -118,14 +118,11 @@ module noc2aximst
     logic [`PREAMBLE_WIDTH-1 : 0] preamble;
     logic [`PREAMBLE_WIDTH-1 : 0] dma_preamble;
 
-	//TODO: cleanup
-    (* mark_debug = "true" *) logic [this_coh_flit_size-`PREAMBLE_WIDTH-1 : 0] coh_rd_data_flit;
-	(* mark_debug = "true" *) logic [AXIDW-1 : 0] wr_data_flit;
-    //logic [`PREAMBLE_WIDTH+`AXIDW-1 : 0] wr_data_flit;
+    logic [this_coh_flit_size-`PREAMBLE_WIDTH-1 : 0] coh_rd_data_flit;
     integer i, j;
 
-    (* mark_debug = "true" *) logic [              4 : 0] current_state;
-    (* mark_debug = "true" *) logic [              4 : 0] next_state;
+    logic [              4 : 0] current_state;
+    logic [              4 : 0] next_state;
 
     localparam RECEIVE_HEADER  = 5'b00000;
     localparam RECEIVE_ADDRESS = 5'b00001;
@@ -171,7 +168,6 @@ module noc2aximst
         dma_snd_data_in = 0;
         dma_snd_wrreq   = 1'b0;
 		coh_rd_data_flit = 0;    
-		wr_data_flit = 0;	
 		ns.r_ready = 1'b0;
 		ns.aw_valid = 1'b0;
 		ns.ar_valid = 1'b0;
@@ -761,7 +757,7 @@ module noc2aximst
             dma_live_flit_swapped = dma_payload_live[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
             dma_pref_flit_swapped = dma_payload_pref[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
         end else begin
-            for (integer j = 0; j < (ARCH_BITS / 8); j = j + 1) begin
+            for (j = 0; j < (ARCH_BITS / 8); j = j + 1) begin
                 dma_live_flit_swapped[8*j +: 8] = dma_payload_live[ARCH_BITS * (cs.word_cnt + 1) - 8*(j+1) +: 8];
                 dma_pref_flit_swapped[8*j +: 8] = dma_payload_pref[ARCH_BITS * (cs.word_cnt + 1) - 8*(j+1) +: 8];
             end
@@ -1014,12 +1010,12 @@ module noc2aximst
 
 function automatic logic [ARCH_BITS-1:0] fix_endian(
      input logic [ARCH_BITS-1:0] data_in_word,
-     input int little_end
+     input int endian
  );
      logic [ARCH_BITS-1:0] data_out_word;
      integer j;
 
-     if (little_end == 0) begin
+     if (endian == 0) begin //big-endian
          data_out_word = data_in_word;
      end 
      else begin
