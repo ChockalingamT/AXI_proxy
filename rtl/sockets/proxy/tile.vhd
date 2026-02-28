@@ -1,4 +1,4 @@
--- Copyright (c) 2011-2024 Columbia University, System Level Design Group
+-- Copyright (c) 2011-2025 Columbia University, System Level Design Group
 -- SPDX-License-Identifier: Apache-2.0
 
 library ieee;
@@ -1178,7 +1178,8 @@ package tile is
       is_tile_io        : boolean              := false;
       SIMULATION        : boolean              := false;
       ROUTER_PORTS      : ports_vec            := "11111";
-      HAS_SYNC          : integer range 0 to 1 := 1);
+      HAS_SYNC          : integer range 0 to 1 := 1;
+      is_asic           : boolean              := false);
     port (
       rst                : in  std_ulogic;
       noc_clk_lock       : in  std_ulogic;

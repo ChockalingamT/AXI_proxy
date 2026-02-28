@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
@@ -405,7 +405,7 @@ def print_header(fp, package, comment_char):
     fp.write(
         comment_char +
         comment_char +
-        " Copyright (c) 2011-2024 Columbia University, System Level Design Group\n")
+        " Copyright (c) 2011-2025 Columbia University, System Level Design Group\n")
     fp.write(
         comment_char +
         comment_char +
@@ -474,7 +474,7 @@ def print_global_constants(fp, soc):
         fp.write("  constant MAX_MCAST_DESTS : integer := 2;\n")
     fp.write("  constant QUEUE_SIZE : integer := " +
              str(soc.noc.queue_size.get()) + ";\n")
-    fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " +
+    fp.write("  constant GLOB_WORD_OFFSET_BITS : integer := " + \
              str(int(math.log2(soc.cache_line_size.get() / soc.ARCH_BITS))) + ";\n")
     fp.write("  constant GLOB_DMA_WORD_OFFSET_BITS : integer := " +
              str(int(math.log2(soc.cache_line_size.get() / 32))) + ";\n")
@@ -565,8 +565,11 @@ def print_constants(fp, soc, esp_config):
 
     #
     fp.write("  ------ DMA memory allocation (contiguous buffer or scatter/gather)\n")
-    fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := " +
-             str(soc.transfers.get()) + ";\n\n")
+
+    if soc.transfers.get() == "Scatter/Gather":
+        fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := 1;\n\n")
+    else:
+        fp.write("  constant CFG_SCATTER_GATHER : integer range 0 to 1 := 0;\n\n")
 
     #
     fp.write("  ------ Cache hierarchy\n")
@@ -646,7 +649,7 @@ def print_constants(fp, soc, esp_config):
 
     fp.write("  ------ Custom Memory Link to FPGA for DDR access\n")
     fp.write("  constant CFG_MEM_LINK_BITS : integer := " +
-             str(soc.ARCH_BITS) + ";\n\n")
+             str(soc.mem_link_width.get()) + ";\n\n")
 
     #
     fp.write("  ------ SVGA\n")

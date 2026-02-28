@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2011-2024 Columbia University, System Level Design Group
+# Copyright (c) 2011-2025 Columbia University, System Level Design Group
 # SPDX-License-Identifier: Apache-2.0
 
 from tkinter import *
@@ -170,10 +170,10 @@ class SoC_Config():
         # Scatter-gather
         line = fp.readline()
         if line.find("CONFIG_HAS_SG = y") != -1:
-            self.transfers.set(1)
+            self.transfers.set("Scatter/Gather")
             self.HAS_SG = True
         else:
-            self.transfers.set(0)
+            self.transfers.set("Big physical area")
         # Topology
         line = fp.readline()
         item = line.split()
@@ -343,7 +343,7 @@ class SoC_Config():
         has_dvfs = False
         fp.write("CPU_ARCH = " + self.CPU_ARCH.get() + "\n")
         fp.write("NCPU_TILE = " + str(self.noc.get_cpu_num(self)) + "\n")
-        if self.transfers.get() == 1:
+        if self.transfers.get() == "Big physical area":
             fp.write("CONFIG_HAS_SG = y\n")
         else:
             fp.write("#CONFIG_HAS_SG is not set\n")
@@ -524,8 +524,7 @@ class SoC_Config():
         self.FPGA_BOARD = FPGA_BOARD
         self.ESP_EMU_TECH = EMU_TECH
         self.ESP_EMU_FREQ = EMU_FREQ
-        # 0 = Bigphysical area ; 1 = Scatter/Gather
-        self.transfers = IntVar()
+        self.transfers = StringVar()
         # CPU architecture
         self.CPU_ARCH = StringVar()
         # Cache hierarchy
@@ -562,13 +561,12 @@ class SoC_Config():
             self.HAS_SGMII = False
 
         # Define maximum number of memory tiles
-        if self.FPGA_BOARD.find("xilinx") != -1:
-            self.nmem_max = 1
-        elif self.FPGA_BOARD == "profpga-xc7v2000t":
+        self.nmem_max = 1
+        if self.FPGA_BOARD == "profpga-xc7v2000t" or self.FPGA_BOARD == "xilinx-vcu118-xcvu9p":
             self.nmem_max = 2
         elif self.FPGA_BOARD == "profpga-xcvu440":
             self.nmem_max = 4
-        else:
+        elif self.FPGA_BOARD == "profpga-xcvu19p":
             self.nmem_max = 7
 
         # Read GRLIB configurations
