@@ -104,7 +104,7 @@ endif
         fi; \
 		echo "import_ip -files ./mig/mig.xci" >> $@; \
 		echo "generate_target  all [get_ips mig] -force " >> $@; \
-	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/mig.tcl; then \
+	elif test -r $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig.tcl; then \
 		echo $(SPACES)"INFO including MIG IP"; \
 		mkdir -p vivado/mig; \
 		cp $(ESP_ROOT)/constraints/$(BOARD)/$(CPU_ARCH)/mig.tcl ./vivado/mig; \

@@ -35,7 +35,7 @@ import esp_global_sv::*;
 /*
  * AXI4 RAM
  */
-module axi_ram_sim #
+module axi_ram_sim_model #
 (
 	parameter kbytes = 1,
     parameter DATA_WIDTH = 32,
@@ -47,7 +47,6 @@ module axi_ram_sim #
 (
     input  wire                   clk,
     input  wire                   rst,
-
     input  wire [  ID_WIDTH-1 : 0] s_axi_awid,
     input  wire [ADDR_WIDTH-1 : 0] s_axi_awaddr,
     input  wire [			7 : 0] s_axi_awlen,
@@ -411,6 +410,8 @@ always @(posedge clk) begin
 			//$display(read_addr_valid/4 - 32'h10000000);
 			$display(actual_read_address);		
 		end
+		if(actual_read_address == 18'h012C0)
+			$display("Time %t Breakaway address %h ", $time, actual_read_address);
 		s_axi_rdata_reg <= mem[actual_read_address];    
 	end
 

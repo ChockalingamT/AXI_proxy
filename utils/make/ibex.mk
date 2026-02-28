@@ -7,7 +7,7 @@ IBEX ?= $(ESP_ROOT)/rtl/cores/ibex/ibex
 RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
 
-soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx8
+soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
 
 soft-clean:
 	$(QUIET_CLEAN)$(RM) 			\
@@ -21,7 +21,7 @@ soft-clean:
 		$(SOFT_BUILD)/main.o		\
 		$(SOFT_BUILD)/uart.o		\
 		$(SOFT_BUILD)/systest.bin	\
-		$(SOFT_BUILD)/ram.vhx8
+		$(SOFT_BUILD)/ram.vhx
 
 soft-distclean: soft-clean
 
@@ -117,10 +117,10 @@ $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
 	fi
 
-$(SOFT_BUILD)/ram.vhx8: $(TEST_PROGRAM)
-	#$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O srec --gap-fill 0 $< $@
-	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_ariane.py 32 $<
+$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/vhx.bin
 
+$(SOFT_BUILD)/vhx.bin: $(TEST_PROGRAM)
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 32 ibex
 
 sysroot:
 

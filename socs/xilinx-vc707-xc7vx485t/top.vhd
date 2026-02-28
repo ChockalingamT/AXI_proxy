@@ -156,8 +156,6 @@ signal uart_ctsn_int : std_logic;       -- UART1_RTSN (u1i.ctsn)
 signal uart_rtsn_int : std_logic;       -- UART1_RTSN (u1o.rtsn)
 
 -- Memory controller DDR3
-signal ddr_ahbsi   : ahb_slv_in_vector_type(0 to MEM_ID_RANGE_MSB);
-signal ddr_ahbso   : ahb_slv_out_vector_type(0 to MEM_ID_RANGE_MSB);
 
 -- DVI (unused on this board)
 signal dvi_apbi  : apb_slv_in_type;
@@ -226,7 +224,7 @@ begin
   led3_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
     port map (led(3), lock);
   led4_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
-    port map (led(4), ddr_ahbso(0).hready);
+    port map (led(4), ddr_axi_so(0).ar.ready);
 
   -- Unused
   led1_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x18v)
@@ -293,8 +291,6 @@ begin
     generic map (CFG_FABTECH, 16, 32, 0, 0, 0, 0, 0, 100000)
     port map (clkm, clkm, chip_refclk, open, clkref, open, open, cgi, cgo, open, open, open);
 
-	s_axi_wstrb_adj <= fix_endian(s_axi_wstrb);
-
     gen_mig : if (SIMULATION /= true) generate
         ddrc : axi2mig_7series
       generic map (
@@ -330,84 +326,46 @@ begin
 
   end generate gen_mig;
 
-  --gen_mig_model : if (SIMULATION = true) generate
-  --  -- pragma translate_off
+  gen_mig_model : if (SIMULATION = true) generate
+    -- pragma translate_off
+ 
+	mig_axiram : axi_ram_sim
+      generic map (
+        kbytes            => 2 * 1024,
+        DATA_WIDTH        => MEM_AXIDW,
+        ADDR_WIDTH        => GLOB_PHYS_ADDR_BITS,
+        STRB_WIDTH        => AW,
+        ID_WIDTH          => 8,
+        PIPELINE_OUTPUT   => 0
+        )
+      port map(
+        rst   => rstn,
+        clk   => clkm,
+		ddr_axi_si	=> ddr_axi_si(0),
+        ddr_axi_so	=> ddr_axi_so(0)
+        );
 
-  --  mig_axiram : axi_ram_sim
-  --    generic map (
-  --  	kbytes			=> 2 * 1024,
-  --      DATA_WIDTH 		=> MEM_AXIDW,
-  --      ADDR_WIDTH 		=> GLOB_PHYS_ADDR_BITS,
-  --      STRB_WIDTH 		=> AW,
-  --      ID_WIDTH   		=> 8,
-  --      PIPELINE_OUTPUT => 0
-  --      )
-  --    port map(
-  --      clk 	=> clkm,
-  --      rst 	=> rstn,
-  --      -- AW Channel
-  --      s_axi_awid 	=> s_axi_awid,
-  --      s_axi_awaddr => s_axi_awaddr,
-  --      s_axi_awlen	 => s_axi_awlen,
-  --      s_axi_awsize 	=> s_axi_awsize,
-  --      s_axi_awburst 	=> s_axi_awburst,
-  --      s_axi_awlock 	=> s_axi_awlock,
-  --      s_axi_awcache 	=> s_axi_awcache,
-  --      s_axi_awprot 	=> s_axi_awprot,
-  --      s_axi_awvalid 	=> s_axi_awvalid,
-  --      s_axi_awready 	=> s_axi_awready,
-  --      -- W Channel
-  --      s_axi_wdata 	=> s_axi_wdata,
-  --      s_axi_wstrb 	=> s_axi_wstrb,
-  --      s_axi_wlast 	=> s_axi_wlast,
-  --      s_axi_wvalid 	=> s_axi_wvalid,
-  --      s_axi_wready 	=> s_axi_wready,
-  --      -- B Channel
-  --      s_axi_bid	=> s_axi_bid,
-  --      s_axi_bresp 	=> s_axi_bresp,
-  --      s_axi_bvalid 	=> s_axi_bvalid,
-  --      s_axi_bready 	=> s_axi_bready,
-  --      -- AR Channel
-  --      s_axi_arid	=> s_axi_arid,
-  --      s_axi_araddr 	=> s_axi_araddr,
-  --      s_axi_arlen 	=> s_axi_arlen,
-  --      s_axi_arsize 	=> s_axi_arsize,
-  --      s_axi_arburst 	=> s_axi_arburst,
-  --      s_axi_arlock 	=> s_axi_arlock,
-  --      s_axi_arcache 	=> s_axi_arcache,
-  --      s_axi_arprot 	=> s_axi_arprot,
-  --      s_axi_arvalid 	=> s_axi_arvalid,
-  --      s_axi_arready 	=> s_axi_arready,
-  --      -- R Channel
-  --      s_axi_rid 	=> s_axi_rid,
-  --      s_axi_rdata 	=> s_axi_rdata,
-  --      s_axi_rresp 	=> s_axi_rresp,
-  --      s_axi_rlast 	=> s_axi_rlast,
-  --      s_axi_rvalid 	=> s_axi_rvalid,
-  --      s_axi_rready 	=> s_axi_rready
-  --      );
+    ddr3_dq           <= (others => 'Z');
+    ddr3_dqs_p        <= (others => 'Z');
+    ddr3_dqs_n        <= (others => 'Z');
+    ddr3_addr         <= (others => '0');
+    ddr3_ba           <= (others => '0');
+    ddr3_ras_n        <= '0';
+    ddr3_cas_n        <= '0';
+    ddr3_we_n         <= '0';
+    ddr3_reset_n      <= '1';
+    ddr3_ck_p         <= (others => '0');
+    ddr3_ck_n         <= (others => '0');
+    ddr3_cke          <= (others => '0');
+    ddr3_cs_n         <= (others => '0');
+    ddr3_dm           <= (others => '0');
+    ddr3_odt          <= (others => '0');
 
-  --  ddr3_dq           <= (others => 'Z');
-  --  ddr3_dqs_p        <= (others => 'Z');
-  --  ddr3_dqs_n        <= (others => 'Z');
-  --  ddr3_addr         <= (others => '0');
-  --  ddr3_ba           <= (others => '0');
-  --  ddr3_ras_n        <= '0';
-  --  ddr3_cas_n        <= '0';
-  --  ddr3_we_n         <= '0';
-  --  ddr3_reset_n      <= '1';
-  --  ddr3_ck_p         <= (others => '0');
-  --  ddr3_ck_n         <= (others => '0');
-  --  ddr3_cke          <= (others => '0');
-  --  ddr3_cs_n         <= (others => '0');
-  --  ddr3_dm           <= (others => '0');
-  --  ddr3_odt          <= (others => '0');
+    calib_done <= '1';
+    clkm <= not clkm after 5.0 ns;
 
-  --  calib_done <= '1';
-  --  clkm <= not clkm after 5.0 ns;
-
-  --  -- pragma translate_on
-  --end generate gen_mig_model;
+    -- pragma translate_on
+  end generate gen_mig_model;
 
 -----------------------------------------------------------------------
 ---  ETHERNET ---------------------------------------------------------
@@ -503,35 +461,12 @@ begin
     eth0_apbo <= apb_none;
     sgmii0_apbo <= apb_none;
     eth0_ahbmo <= ahbm_none;
-    --edcl_ahbmo <= ahbm_none;
+    edcl_ahbmo <= ahbm_none;
     txp <= '0';
     txn <= '1';
     emdc <= '0';
     erst <= '0';
     emdio <= '0';
-
-    edcl_ahb_emu_i : edcl_ahbmst_emu
-    generic map(
-        hindex => CFG_AHB_JTAG+1
-    )
-    port map(
-        clk => chip_refclk,
-        reset => rstn,
-        ahbmo => edcl_ahbmo,
-        ahbmi => eth0_ahbmi,
-        edcl_oen_ctrl => open
-    );
-
- -- no_eth0 : if SIMULATION = true or CFG_GRETH = 0 generate
- --   eth0_apbo <= apb_none;
- --   sgmii0_apbo <= apb_none;
- --   eth0_ahbmo <= ahbm_none;
- --   edcl_ahbmo <= ahbm_none;
- --   txp <= '0';
- --   txn <= '1';
- --   emdc <= '0';
- --   erst <= '0';
- --   emdio <= '0';
   end generate;
 
   -----------------------------------------------------------------------------

@@ -1257,12 +1257,11 @@ begin
         cache_y       => cache_y,
         cache_x       => cache_x)
       port map (
-        rst                        => llc_rstn,
-        clk                        => tile_clk,
-        local_y                    => this_local_y,
-        local_x                    => this_local_x,
-        pconfig                    => this_llc_pconfig,
-
+        rst           => llc_rstn,
+        clk           => tile_clk,
+        local_y       => this_local_y,
+        local_x       => this_local_x,
+        pconfig       => this_llc_pconfig,
         --AR Channel
         AR_ID 		=> mst2_ar_id,
         AR_ADDR 	=> mst2_ar_addr,

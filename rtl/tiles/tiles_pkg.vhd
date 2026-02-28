@@ -29,8 +29,8 @@ package tiles_pkg is
       uart_ctsn          : in  std_logic;
       uart_rtsn          : out std_logic;
       cpuerr             : out   std_logic;
-      ddr_axi_si        : out   axi_mosi_vector(0 to MEM_ID_RANGE_MSB);
-      ddr_axi_so        : in    axi_somi_vector(0 to MEM_ID_RANGE_MSB);
+      ddr_axi_si         : out   axi_mosi_vector(0 to MEM_ID_RANGE_MSB);
+      ddr_axi_so         : in    axi_somi_vector(0 to MEM_ID_RANGE_MSB);
 	  eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
       sgmii0_apbi        : out apb_slv_in_type;

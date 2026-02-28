@@ -2,19 +2,17 @@
 
 #This script converts the executable binary into a vhx file format and appends 0's to fill the 2MB memory. 
 import sys
+import os
 
 if len(sys.argv) != 3:
     print("usage: python3 bin2txt.py <cpu_arch_data_width> <source_binary_file>")
     sys.exit(1)
 
 cpu_arch_data_width = int(sys.argv[1])
-source_file = sys.argv[2]
-binfile_path = source_file[:-3] + "bin"
+cpu_type = sys.argv[2]
 
-if cpu_arch_data_width == 64:
-    txtfile_path = "soft-build/ariane/ram.vhx"
-else: # 32-bit for ibex/leon3
-    txtfile_path = "soft-build/ibex/ram.vhx"
+binfile_path = os.path.join("soft-build", cpu_type, "systest.bin")
+txtfile_path = os.path.join("soft-build", cpu_type, "ram.vhx")
 
 # --- Calculations for 2MB memory ---
 MEMORY_SIZE_BYTES = 2 * 1024 * 1024 # 2 MB

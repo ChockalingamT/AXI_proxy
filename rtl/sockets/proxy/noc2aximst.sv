@@ -120,7 +120,6 @@ module noc2aximst
 
 	//TODO: cleanup
     (* mark_debug = "true" *) logic [this_coh_flit_size-`PREAMBLE_WIDTH-1 : 0] coh_rd_data_flit;
-	(* mark_debug = "true" *) logic [ DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] dma_rd_data_flit;
 	(* mark_debug = "true" *) logic [AXIDW-1 : 0] wr_data_flit;
     //logic [`PREAMBLE_WIDTH+`AXIDW-1 : 0] wr_data_flit;
     integer i, j;
@@ -172,10 +171,7 @@ module noc2aximst
         dma_snd_data_in = 0;
         dma_snd_wrreq   = 1'b0;
 		coh_rd_data_flit = 0;    
-		dma_rd_data_flit = 0; 
-		wr_data_flit = 0;
-/*
-						*/	
+		wr_data_flit = 0;	
 		ns.r_ready = 1'b0;
 		ns.aw_valid = 1'b0;
 		ns.ar_valid = 1'b0;
@@ -208,7 +204,6 @@ module noc2aximst
 				ns.coh_dma_flag 	= 0;
 				ns.sample_flag 		= 2'b00;
 				//coh_rd_data_flit 	= 0;    
-				//dma_rd_data_flit 	= 0; 
 				ns.dma_noc_data 	= 0;
 				ns.word_cnt         = 0;
             end
@@ -332,10 +327,6 @@ module noc2aximst
                                     ns.count = 0; 
                                 end
 							    ns.ar_addr = cs.ar_addr + ((cs.ar_len + 1) << cs.ar_size); 
-                                /*if      (cs.ar_size == XSIZE_BYTE)  ns.ar_addr = cs.ar_addr + 256;
-                                else if (cs.ar_size == XSIZE_HWORD) ns.ar_addr = cs.ar_addr + 512;
-                                else if (cs.ar_size == XSIZE_WORD)  ns.ar_addr = cs.ar_addr + 1024;
-                                else if (cs.ar_size == XSIZE_DWORD) ns.ar_addr = cs.ar_addr + 2048; */
                                 ns.burst_flag = 1;
                                 next_state = READ_REQUEST;
                             end              
@@ -498,7 +489,7 @@ module noc2aximst
 				end
 		  	end
 
-		  	DMA_SEND_HEADER: begin					// Compared to the READ_REQUEST state: here the AR_VALID is deasserted
+		  	DMA_SEND_HEADER: begin
 				if (dma_snd_full == 1'b0) begin
 					next_state = DMA_SEND_DATA;
 	                dma_snd_data_in = dma_header_reg;
@@ -512,25 +503,24 @@ module noc2aximst
 				else begin
                     ns.r_ready = 1'b1;
                     if (R_VALID == 1'b1) begin
-						dma_rd_data_flit[ARCH_BITS * cs.word_cnt +: ARCH_BITS] = fix_endian(R_DATA, little_end);
-						dma_snd_data_in[DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] = dma_rd_data_flit;
+						ns.dma_noc_data[ARCH_BITS * cs.word_cnt +: ARCH_BITS] = fix_endian(R_DATA, little_end);
 						ns.word_cnt = cs.word_cnt + 1;
 
 						if (R_LAST == 1'b0) begin
 							if ((ns.word_cnt == DMA_NOC_WIDTH / ARCH_BITS) || (eth_dma == 1)) begin
 								ns.word_cnt = 0;
 								dma_snd_wrreq = 1'b1;
-								dma_snd_data_in[DMA_NOC_FLIT_SIZE-1:DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH] = PREAMBLE_BODY;
+                                dma_snd_data_in = {PREAMBLE_BODY, ns.dma_noc_data};
 							end
 						end else begin
 							ns.word_cnt = 0;
 							dma_snd_wrreq = 1'b1;	
 							ns.r_ready = 1'b0;
                             if (cs.count == 0) begin 
-                               	dma_snd_data_in[DMA_NOC_FLIT_SIZE-1:DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH] = PREAMBLE_TAIL;				
+                                dma_snd_data_in = {PREAMBLE_TAIL, ns.dma_noc_data};
 								next_state = RECEIVE_HEADER;
 							end else begin
-								dma_snd_data_in[DMA_NOC_FLIT_SIZE-1:DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH] = PREAMBLE_BODY;
+                                dma_snd_data_in = {PREAMBLE_BODY, ns.dma_noc_data};
 								if (cs.count > 255) begin
                                    	ns.ar_len = 255;
                                     ns.count  = cs.count - 255; 
@@ -569,7 +559,7 @@ module noc2aximst
            	DMA_WRITE_REQUEST: begin
 				ns.aw_valid = 1'b1;
 				if (AW_READY == 1'b1) begin
-					if (cs.msg == REQ_DMA_WRITE && ARCH_BITS == 64 && eth_dma == 1)
+					if (cs.msg == REQ_DMA_WRITE && eth_dma == 1)
                         next_state = DMA_WRITE_DATA_ETH;
                     else begin
                         if (cs.coh_dma_flag)
@@ -578,25 +568,20 @@ module noc2aximst
 						    next_state = DMA_WRITE_DATA;
                     end
 
-		    		//Pipeline prefetch
-					ns.sample_flag = 2'b00;
-                    if (dma_rcv_empty == 1'b0) begin	
-                        dma_rcv_rdreq = 1'b1;
-                        if (cs.msg == REQ_DMA_WRITE && ARCH_BITS == 64 && eth_dma == 1) begin //TODO: check why ???
-                            if (cs.word_cnt == 1)
-                                ns.dma_flit = {cs.dma_flit[63:32], dma_rcv_data_out[31:0]};
-                            else
-                                ns.dma_flit = {dma_rcv_data_out[31:0], 32'b0};
-                        end else
+		    		//Pipeline prefetch for DMA except ethernet
+                    if (eth_dma != 1) begin
+					    ns.sample_flag = 2'b00;
+                        if (dma_rcv_empty == 1'b0) begin
+                            dma_rcv_rdreq = 1'b1;
                             ns.dma_flit = dma_rcv_data_out;
-
-                            if (dma_preamble == PREAMBLE_BODY) 
-								ns.sample_flag = 2'b01;
+                            if (dma_preamble == PREAMBLE_BODY)
+                                ns.sample_flag = 2'b01;
                             else if (dma_preamble == PREAMBLE_TAIL) 
-								ns.sample_flag = 2'b10;
+                                ns.sample_flag = 2'b10;
+                        end
                     end
 					ns.aw_valid = 1'b0;
-				end
+                end
             end
 
     		DMA_WRITE_DATA: begin
@@ -604,7 +589,7 @@ module noc2aximst
     		    if (cs.sample_flag != 2'b00) begin
     		        if (W_READY == 1'b1) begin
     		            ns.word_cnt = cs.word_cnt + 1;
-    		            ns.sample_flag = 2'b00; // Assume we need new data unless proven otherwise
+    		            ns.sample_flag = 2'b00; 
 
     		            if (cs.word_rem == 0) begin
     		                // BURST IS DONE
@@ -626,6 +611,7 @@ module noc2aximst
     		                    ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
     		                end
     		            end else begin
+    		                ns.word_rem = cs.word_rem - 1;
     		                // BURST CONTINUES
     		                if ((ns.word_cnt == DMA_NOC_WIDTH / ARCH_BITS) || (eth_dma == 1)) begin
     		                    // Flit exhausted, need to fetch the next one from NoC
@@ -642,7 +628,6 @@ module noc2aximst
     		                end else begin
     		                    // Flit still has more words to unpack
     		                    ns.sample_flag = 2'b11;
-    		                    ns.word_rem = cs.word_rem - 1;
     		                end
     		            end
     		        end
@@ -653,14 +638,12 @@ module noc2aximst
     		        dma_rcv_rdreq = 1'b1;
     		        ns.dma_flit = dma_rcv_data_out;
    
-    		        // Setup initial prefetch state based on the flit we just read
     		        if (dma_rcv_data_out[DMA_NOC_FLIT_SIZE-1:DMA_NOC_FLIT_SIZE-2] == 2'b10)
     		            ns.sample_flag = 2'b10;
     		        else
     		            ns.sample_flag = 2'b01;
 
     		        if (W_READY == 1'b1) begin
-    		            // We read the NoC AND the AXI bus accepted it in the exact same cycle!
     		            ns.word_cnt = cs.word_cnt + 1;
     		            ns.sample_flag = 2'b00;
 
@@ -697,8 +680,7 @@ module noc2aximst
     		    end
     		end
 
-           DMA_WRITE_DATA_COH: begin
-
+            DMA_WRITE_DATA_COH: begin
 				if (cs.sample_flag != 2'b0) begin
 					if (W_READY == 1'b1) begin
 						ns.sample_flag = 2'b00;
@@ -730,101 +712,22 @@ module noc2aximst
 						end					
 					end
 				end
-           end
+            end
 
-           DMA_WRITE_DATA_ETH: begin
-			   //Take care of odd TAIL
-               if (cs.sample_flag == 2'b10) begin
-                   if (W_READY == 1'b1) begin
-                       ns.word_cnt = 1'b0;
-                       ns.sample_flag = 2'b00;
-                       next_state = RECEIVE_HEADER;
-                   end
-               end
-				//First 32-bit already prefetched
-               else if (cs.sample_flag == 2'b01) begin
-                   if (cs.word_cnt != 1'b1 && dma_rcv_empty == 1'b0) begin
-                       dma_rcv_rdreq = 1'b1;
-                       ns.dma_flit = {cs.dma_flit[63:32], dma_rcv_data_out[31:0]};
-                       ns.word_cnt = cs.word_cnt + 1'b1;
-                       if (W_READY == 1'b1) begin
-                           ns.word_cnt = 1'b0;
-                           ns.sample_flag = 2'b00;
-                           if (dma_preamble != PREAMBLE_TAIL) begin
-                               ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
-                               next_state = DMA_WRITE_REQUEST;
-                               ns.aw_valid = 1'b1;
-                           end else
-                               next_state = RECEIVE_HEADER;
-                       end
-                   end
-				//Waiting for AXI bus 
-                else if (cs.word_cnt == 1'b1) begin
-                       if (W_READY == 1'b1) begin
-                           ns.word_cnt = 1'b0;
-                           ns.sample_flag = 2'b00;
-                           ns.aw_addr = cs.aw_addr + ((cs.aw_len + 1) << cs.aw_size);
-                           next_state = DMA_WRITE_REQUEST;
-                           ns.aw_valid = 1'b1;
-                       end
-                   end
-               end
-			   //Waitingf for first word
-               else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin
-                   dma_rcv_rdreq = 1'b1;
-                   ns.dma_flit = {dma_rcv_data_out[31:0], 32'b0};
-
-                   if (dma_preamble == PREAMBLE_BODY)
-                       ns.sample_flag = 2'b01; 
-                   else if (dma_preamble == PREAMBLE_TAIL)
-                       ns.sample_flag = 2'b10;
-               end
-           end
-
-
-/*
-
-
-           	DMA_WRITE_DATA_ETH: begin
-				if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10) begin
-                    if (cs.word_cnt != 1'b1 && dma_rcv_empty == 1'b0) begin
+            DMA_WRITE_DATA_ETH: begin
+                if (dma_rcv_empty == 1'b0) begin
+                    if (W_READY == 1'b1) begin
                         dma_rcv_rdreq = 1'b1;
-						if (ARCH_BITS == 64)
-							ns.dma_flit = {cs.dma_flit[63:32], dma_rcv_data_out[31:0]};
-						else
-							ns.dma_flit = dma_rcv_data_out;
-						ns.word_cnt = cs.word_cnt + 1'b1;                       // Both words are already in place
-   					    if (W_READY == 1'b1) begin	// If the data can be read in the same cycle
-                            ns.word_cnt = 1'b0;
-						    ns.sample_flag = 2'b00; // The write process is complete
-						    if (cs.sample_flag == 2'b01 && dma_preamble != PREAMBLE_TAIL) begin	// Unless this was only a body flit
-                	            ns.aw_addr = cs.aw_addr + 4'b1000;
-                			    next_state = DMA_WRITE_REQUEST;
-						    end else 
-							    next_state = RECEIVE_HEADER;
-                	    end
-                    end else if (cs.word_cnt == 1'b1) begin
-					    if (W_READY == 1'b1) begin	// If the data can be read in the same cycle
-                            ns.word_cnt = 1'b0;
-						    ns.sample_flag = 2'b00; // The write process is complete
-						    if (cs.sample_flag == 2'b01) begin	// Unless this was only a body flit
-                	            ns.aw_addr = cs.aw_addr + 4'b1000;
-                			    next_state = DMA_WRITE_REQUEST;
-						    end else 
-							    next_state = RECEIVE_HEADER;
-                	    end
+                        ns.aw_addr = cs.aw_addr + 4'b0100; 
+                        if (dma_preamble == PREAMBLE_TAIL) begin
+                            next_state = RECEIVE_HEADER;
+                        end else begin
+                            next_state = DMA_WRITE_REQUEST;
+                            ns.aw_valid = 1'b1;
+                        end
                     end
-				end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin	// If no data have been received yet and there are available data
-
-					dma_rcv_rdreq = 1'b1;			// Read this data
-
-                    //biruk's patch
-                    ns.dma_flit = {dma_rcv_data_out[31:0], 32'b0};
-					if 		(dma_preamble == PREAMBLE_BODY) ns.sample_flag = 2'b01;
-	                else if (dma_preamble == PREAMBLE_TAIL) ns.sample_flag = 2'b10;
-				end
-           	end
-*/
+                end
+            end
         endcase
     end 
 
@@ -853,10 +756,6 @@ module noc2aximst
 
         dma_payload_live = dma_rcv_data_out[DMA_NOC_WIDTH-1 : 0];
         dma_payload_pref = cs.dma_flit[DMA_NOC_WIDTH-1 : 0];
-
-		//dma_live_flit_swapped = fix_endian(dma_payload_live, little_end);
-		//dma_pref_flit_swapped = fix_endian(dma_payload_live, little_end);
-
 		
         if (little_end == 0) begin
             dma_live_flit_swapped = dma_payload_live[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
@@ -893,28 +792,50 @@ module noc2aximst
                 if (cs.sample_flag == 2'b01 || cs.sample_flag == 2'b10 || cs.sample_flag == 2'b11) begin
                     w_valid_comb = 1'b1;
                     w_data_comb  = dma_pref_flit_swapped;
-                    w_last_comb  = (cs.aw_len == 0 || cs.sample_flag == 2'b10);
+                    w_last_comb  = (cs.word_rem == 0);
                 end else if (cs.sample_flag == 2'b00 && dma_rcv_empty == 1'b0) begin
                     w_valid_comb = 1'b1;
                     w_data_comb  = dma_live_flit_swapped;
-                    w_last_comb  = (cs.aw_len == 0); 
+                    w_last_comb  = (cs.word_rem == 0);
                 end
             end
+
+            DMA_WRITE_DATA_ETH: begin
+                if (dma_rcv_empty == 1'b0) begin
+                    w_valid_comb = 1'b1;
+                    w_last_comb  = 1'b1;
+
+                    if (ARCH_BITS == 64) begin
+                        if (cs.aw_addr[2] == 1'b0) begin
+                            w_data_comb = {dma_rcv_data_out[31:0], 32'b0};
+                            w_strb_comb = 8'b11110000;
+                        end else begin
+                            w_data_comb = {32'b0, dma_rcv_data_out[31:0]};
+                            w_strb_comb = 8'b00001111;
+                        end
+                    end else begin
+                        // 32-bit architecture fallback
+                        w_data_comb = dma_rcv_data_out[AXIDW-1:0];
+                        w_strb_comb = {AW{1'b1}}; 
+                    end
+                end
+            end
+
             DMA_WRITE_DATA_ETH: begin
 				if (cs.sample_flag == 2'b10) begin
                 	w_valid_comb = 1'b1;
                 	w_last_comb = 1'b1;
-                	w_data_comb = cs.dma_flit;
+                	w_data_comb = cs.w_data;
 				end
 				else if (cs.sample_flag == 2'b01) begin
-                	if (cs.word_cnt != 1'b1 && dma_rcv_empty == 1'b0) begin
+                	if (cs.word_cnt != 1 && dma_rcv_empty == 1'b0) begin
                         w_valid_comb = 1'b1;
                         w_last_comb = 1'b1;
-	                    w_data_comb = {cs.dma_flit[63:32], dma_rcv_data_out[31:0]};
-					end else if (cs.word_cnt == 1'b1) begin
+	                    w_data_comb = {cs.w_data[63:32], dma_rcv_data_out[31:0]};
+					end else if (cs.word_cnt == 1) begin
                         w_valid_comb = 1'b1;
                         w_last_comb = 1'b1;
-                        w_data_comb = cs.dma_flit;
+                        w_data_comb = cs.w_data;
                     end
                 end
             end
@@ -968,7 +889,8 @@ module noc2aximst
             cs.burst_flag <= 0;
 			cs.coh_dma_flag <= 0;
 			cs.dma_noc_data <= 0;
-			cs.hsize_msb <= 0;
+			cs.word_rem <= 0;
+            cs.hsize_msb <= 0;
         end else begin
             current_state <= next_state;
             cs <= ns;

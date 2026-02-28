@@ -40,43 +40,8 @@ entity esp is
     uart_ctsn         : in    std_logic;  -- UART1_RTSN (u1i.ctsn)
     uart_rtsn         : out   std_logic;  -- UART1_RTSN (u1o.rtsn)
     cpuerr            : out   std_logic;
-	ddr_axi_si		  : out   axi_mosi_vector(0 to MEM_ID_RANGE_MSB);
-	ddr_axi_so		  : in    axi_somi_vector(0 to MEM_ID_RANGE_MSB);
-   -- s_axi_awid        : out   std_logic_vector(7 downto 0);
-   -- s_axi_awaddr      : out   std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-   -- s_axi_awlen       : out   std_logic_vector(7 downto 0);
-   -- s_axi_awsize      : out   std_logic_vector(2 downto 0);
-   -- s_axi_awburst     : out   std_logic_vector(1 downto 0);
-   -- s_axi_awlock      : out   std_logic;
-   -- s_axi_awcache     : out   std_logic_vector(3 downto 0);
-   -- s_axi_awprot      : out   std_logic_vector(2 downto 0);
-   -- s_axi_awvalid     : out   std_logic;
-   -- s_axi_awready     : in    std_logic;
-   -- s_axi_wdata       : out   std_logic_vector(AXIDW-1 downto 0);
-   -- s_axi_wstrb       : out   std_logic_vector((AXIDW/8)-1 downto 0);
-   -- s_axi_wlast       : out   std_logic;
-   -- s_axi_wvalid      : out   std_logic;
-   -- s_axi_wready      : in    std_logic;
-   -- s_axi_bid         : in    std_logic_vector(7 downto 0);
-   -- s_axi_bresp       : in    std_logic_vector(1 downto 0);
-   -- s_axi_bvalid      : in    std_logic;
-   -- s_axi_bready      : out   std_logic;
-   -- s_axi_arid        : out   std_logic_vector(7 downto 0);
-   -- s_axi_araddr      : out   std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-   -- s_axi_arlen       : out   std_logic_vector(7 downto 0);
-   -- s_axi_arsize      : out   std_logic_vector(2 downto 0);
-   -- s_axi_arburst     : out   std_logic_vector(1 downto 0);
-   -- s_axi_arlock      : out   std_logic;
-   -- s_axi_arcache     : out   std_logic_vector(3 downto 0);
-   -- s_axi_arprot      : out   std_logic_vector(2 downto 0);
-   -- s_axi_arvalid     : out   std_logic;
-   -- s_axi_arready     : in    std_logic;
-   -- s_axi_rid         : in    std_logic_vector(7 downto 0);
-   -- s_axi_rdata       : in    std_logic_vector(AXIDW-1 downto 0);
-   -- s_axi_rresp       : in    std_logic_vector(1 downto 0);
-   -- s_axi_rlast       : in    std_logic;
-   -- s_axi_rvalid      : in    std_logic;
-   -- s_axi_rready      : out   std_logic;
+    ddr_axi_si        : out   axi_mosi_vector(0 to MEM_ID_RANGE_MSB);
+    ddr_axi_so        : in    axi_somi_vector(0 to MEM_ID_RANGE_MSB);
     eth0_apbi         : out apb_slv_in_type;
     eth0_apbo         : in  apb_slv_out_type;
     sgmii0_apbi       : out apb_slv_in_type;
@@ -606,7 +571,7 @@ begin
       port map (
         rst                => rst_int,
         clk                => sys_clk_int(0),
-	noc_clk            => sys_clk_int(0),
+        noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
         tile_rstn          => open,
         -- Test interface
@@ -659,7 +624,7 @@ begin
         noc5_output_port_tile   => noc5_data_l_out(i),
         noc6_output_port_tile   => noc6_data_l_out(i),
         mon_noc            => mon_noc_s(i),
-	mon_dvfs_out       => mon_dvfs_out(i));
+        mon_dvfs_out       => mon_dvfs_out(i));
     end generate empty_tile;
 
 
@@ -820,9 +785,9 @@ begin
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
-	rst                => rst_int,
-	clk                => refclk,
-	noc_clk            => sys_clk_int(0),
+        rst                => rst_int,
+        clk                => refclk,
+        noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
         tile_rstn          => open,
         -- Test interface
@@ -831,21 +796,21 @@ begin
         tms                => '0',
         tclk               => '0',
         -- I/O bus interfaces
-	eth0_apbi          => eth0_apbi,
-	eth0_apbo          => eth0_apbo,
-	sgmii0_apbi        => sgmii0_apbi,
-	sgmii0_apbo        => sgmii0_apbo,
-	eth0_ahbmi         => eth0_ahbmi,
-	eth0_ahbmo         => eth0_ahbmo,
-	edcl_ahbmo         => edcl_ahbmo,
-	dvi_apbi           => dvi_apbi,
-	dvi_apbo           => dvi_apbo,
-	dvi_ahbmi          => dvi_ahbmi,
-	dvi_ahbmo          => dvi_ahbmo,
-	uart_rxd           => uart_rxd,
-	uart_txd           => uart_txd,
-	uart_ctsn          => uart_ctsn,
-	uart_rtsn          => uart_rtsn,
+        eth0_apbi          => eth0_apbi,
+        eth0_apbo          => eth0_apbo,
+        sgmii0_apbi        => sgmii0_apbi,
+        sgmii0_apbo        => sgmii0_apbo,
+        eth0_ahbmi         => eth0_ahbmi,
+        eth0_ahbmo         => eth0_ahbmo,
+        edcl_ahbmo         => edcl_ahbmo,
+        dvi_apbi           => dvi_apbi,
+        dvi_apbo           => dvi_apbo,
+        dvi_ahbmi          => dvi_ahbmi,
+        dvi_ahbmo          => dvi_ahbmo,
+        uart_rxd           => uart_rxd,
+        uart_txd           => uart_txd,
+        uart_ctsn          => uart_ctsn,
+        uart_rtsn          => uart_rtsn,
         -- DCO config
         dco_freq_sel            => dco_freq_sel(i),
         dco_div_sel             => dco_div_sel(i),
@@ -853,7 +818,7 @@ begin
         dco_cc_sel              => dco_cc_sel(i),
         dco_clk_sel             => dco_clk_sel(i),
         dco_en                  => dco_en(i),
-	-- NOC
+        -- NOC
         noc1_stop_in_tile       => noc1_stop_in_tile(i),
         noc1_stop_out_tile      => noc1_stop_out_tile(i),
         noc1_data_void_in_tile  => noc1_data_void_in_tile(i),
@@ -891,7 +856,7 @@ begin
         noc5_output_port_tile   => noc5_data_l_out(i),
         noc6_output_port_tile   => noc6_data_l_out(i),
         mon_noc            => mon_noc_s(i),
-	mon_dvfs           => mon_dvfs_out(i));
+        mon_dvfs           => mon_dvfs_out(i));
     end generate io_tile;
 
 
@@ -901,54 +866,14 @@ begin
         ROUTER_PORTS => set_router_ports(CFG_FABTECH, CFG_XLEN, CFG_YLEN, tile_x(i), tile_y(i)),
         HAS_SYNC     => CFG_HAS_SYNC)
       port map (
-	    rst                => rst_int,
-	    clk                => sys_clk_int(tile_mem_id(i)),
-	    noc_clk            => sys_clk_int(0),
+        rst                => rst_int,
+        clk                => sys_clk_int(tile_mem_id(i)),
+        noc_clk            => sys_clk_int(0),
         tile_clk           => tile_clk(i),
         tile_rstn          => open,
         -- DDR controller ports (this_has_ddr -> 1)
         ddr_axi_si         => ddr_axi_si(tile_mem_id(i)),
-    	ddr_axi_so         => ddr_axi_so(tile_mem_id(i)),
-		---- AW Channel
-        --s_axi_awid 	   => s_axi_awid,
-        --s_axi_awaddr       => s_axi_awaddr,
-        --s_axi_awlen    	   => s_axi_awlen,
-        --s_axi_awsize 	   => s_axi_awsize,
-        --s_axi_awburst 	   => s_axi_awburst,
-        --s_axi_awlock 	   => s_axi_awlock,
-        --s_axi_awcache 	   => s_axi_awcache,
-        --s_axi_awprot 	   => s_axi_awprot,
-        --s_axi_awvalid 	   => s_axi_awvalid,
-        --s_axi_awready 	   => s_axi_awready,
-        ---- W Channel
-        --s_axi_wdata 	   => s_axi_wdata,
-        --s_axi_wstrb 	   => s_axi_wstrb,
-        --s_axi_wlast 	   => s_axi_wlast,
-        --s_axi_wvalid	   => s_axi_wvalid,
-        --s_axi_wready 	   => s_axi_wready,
-        ---- B Channel
-        --s_axi_bid 	   => s_axi_bid,
-        --s_axi_bresp 	   => s_axi_bresp,
-        --s_axi_bvalid 	   => s_axi_bvalid,
-        --s_axi_bready 	   => s_axi_bready,
-        ---- AR Channel
-        --s_axi_arid 	   => s_axi_arid,
-        --s_axi_araddr 	   => s_axi_araddr,
-        --s_axi_arlen 	   => s_axi_arlen,
-        --s_axi_arsize 	   => s_axi_arsize,
-        --s_axi_arburst 	   => s_axi_arburst,
-        --s_axi_arlock 	   => s_axi_arlock,
-        --s_axi_arcache 	   => s_axi_arcache,
-        --s_axi_arprot 	   => s_axi_arprot,
-        --s_axi_arvalid 	   => s_axi_arvalid,
-        --s_axi_arready 	   => s_axi_arready,
-        ---- R Channel
-        --s_axi_rid 	   => s_axi_rid,
-        --s_axi_rdata 	   => s_axi_rdata,
-        --s_axi_rresp 	   => s_axi_rresp,
-        --s_axi_rlast 	   => s_axi_rlast,
-        --s_axi_rvalid 	   => s_axi_rvalid,
-        --s_axi_rready 	   => s_axi_rready,
+        ddr_axi_so         => ddr_axi_so(tile_mem_id(i)),
         -- Test interface
         tdi                => '0',
         tdo                => open,
@@ -961,7 +886,7 @@ begin
         dco_cc_sel              => dco_cc_sel(i),
         dco_clk_sel             => dco_clk_sel(i),
         dco_en                  => dco_en(i),
-	    -- NOC
+        -- NOC
         noc1_stop_in_tile       => noc1_stop_in_tile(i),
         noc1_stop_out_tile      => noc1_stop_out_tile(i),
         noc1_data_void_in_tile  => noc1_data_void_in_tile(i),
@@ -999,9 +924,9 @@ begin
         noc5_output_port_tile   => noc5_data_l_out(i),
         noc6_output_port_tile   => noc6_data_l_out(i),
         mon_noc            => mon_noc_s(i),
-	mon_mem            => mon_mem(tile_mem_id(i)),
-	mon_cache          => mon_llc_int(i),
-	mon_dvfs           => mon_dvfs_out(i));
+        mon_mem            => mon_mem(tile_mem_id(i)),
+        mon_cache          => mon_llc_int(i),
+        mon_dvfs           => mon_dvfs_out(i));
     end generate mem_tile;
 
     slm_tile: if tile_type(i) = 5 generate

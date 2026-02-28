@@ -275,7 +275,7 @@ architecture rtl of llc_wrapper_axi is
 -- AXI master FSM signals
 -----------------------------------------------------------------------------
 
-  type axim_fsm is (idle, read_request, load_line, send_mem_rsp, write_request, store_line);
+  type axim_fsm is (idle, read_request, load_line, send_mem_rsp, write_request, store_line, write_response_wait);
 
   type axim_reg_type is record
     state    : axim_fsm;
@@ -819,7 +819,7 @@ begin  -- architecture rtl
   axi_mst_if_gen: if ahb_if_en /= 0 generate
 
 -------------------------------------------------------------------------------
--- FSM: Bridge from LLC cache to AHB bus
+-- FSM: Bridge from LLC cache to AXI bus
 -------------------------------------------------------------------------------
   fsm_axim : process (axim_reg,
 					  AR_READY, R_ID, R_DATA, R_RESP, R_LAST, R_VALID,
@@ -932,11 +932,16 @@ begin  -- architecture rtl
 
 		if W_READY = '1' then
 			if reg.word_cnt = WORDS_PER_LINE then
-				reg.state := idle;
+				reg.state := write_response_wait;
 			else
 				reg.word_cnt := reg.word_cnt + 1;
 			end if;
 		end if;
+
+      when write_response_wait =>
+        if B_VALID = '1' then
+          reg.state := idle;
+         end if;
 
     end case;
 

@@ -8,7 +8,7 @@ RISCV_TESTS = $(SOFT)/riscv-tests
 RISCV_PK = $(SOFT)/riscv-pk
 OPENSBI = $(SOFT)/opensbi
 
-soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx8
+soft: $(SOFT_BUILD)/prom.srec $(SOFT_BUILD)/ram.srec $(SOFT_BUILD)/prom.bin $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/ram.vhx
 
 soft-clean:
 	$(QUIET_CLEAN)$(RM)		 	\
@@ -114,11 +114,10 @@ $(SOFT_BUILD)/ram.srec: $(TEST_PROGRAM)
 		python3 $(ESP_ROOT)/utils/scripts/srec/modify_srec.py $@ $(SIM_DATA_FILES) $(START_ADDRS);\
 	fi
 
-$(SOFT_BUILD)/ram.vhx8: $(TEST_PROGRAM)
-	$(QUIET_OBJCP) riscv64-unknown-elf-objcopy -O verilog $< $@
-	#python3 $(ESP_ROOT)/utils/scripts/srec/create_vhx_ariane.py $@ > $(SOFT_BUILD)/ram2.vhx
-	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 64 $<
-	#rm $@
+$(SOFT_BUILD)/ram.vhx: $(SOFT_BUILD)/systest.bin $(SOFT_BUILD)/vhx.bin
+
+$(SOFT_BUILD)/vhx.bin: $(TEST_PROGRAM)
+	python3 $(ESP_ROOT)/utils/scripts/file_handling/bin2txt_vhx.py 64 ariane
 
 $(SOFT_BUILD)/sysroot:
 	@mkdir -p $(SOFT_BUILD)

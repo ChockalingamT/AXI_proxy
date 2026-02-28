@@ -30,7 +30,7 @@ module crossbar_wrap
     input logic [7:0] 			mst0_aw_len,
     input logic [2:0] 			mst0_aw_size,
     input logic [1:0] 			mst0_aw_burst,
-    input logic 			mst0_aw_lock,
+    input logic 				mst0_aw_lock,
     input logic [3:0] 			mst0_aw_cache,
     input logic [2:0] 			mst0_aw_prot,
     input logic [3:0] 			mst0_aw_qos,
@@ -265,7 +265,7 @@ module crossbar_wrap
     output logic [7:0] 			dram_ar_len,
     output logic [2:0] 			dram_ar_size,
     output logic [1:0] 			dram_ar_burst,
-    output logic 			dram_ar_lock,
+    output logic 				dram_ar_lock,
     output logic [3:0] 			dram_ar_cache,
     output logic [2:0] 			dram_ar_prot,
     output logic [3:0] 			dram_ar_qos,
@@ -311,22 +311,22 @@ module crossbar_wrap
    // ---------------
    axi_node_wrap_with_slices
      #(
-       .NB_SLAVE           ( NMST   ),
-       .NB_MASTER          ( NSLV   ),
-       .NB_REGION          ( 1                ),
-       .AXI_ADDR_WIDTH     ( AXI_ADDR_WIDTH     ),
-       .AXI_DATA_WIDTH     ( AXI_DATA_WIDTH     ),
-       .AXI_USER_WIDTH     ( AXI_USER_WIDTH     ),
-       .AXI_ID_WIDTH       ( AXI_ID_WIDTH ),
-       .MASTER_SLICE_DEPTH ( 1                ),
-       .SLAVE_SLICE_DEPTH  ( 1                )
+       .NB_SLAVE           (NMST),
+       .NB_MASTER          (NSLV   ),
+       .NB_REGION          (1),
+       .AXI_ADDR_WIDTH     (AXI_ADDR_WIDTH),
+       .AXI_DATA_WIDTH     (AXI_DATA_WIDTH),
+       .AXI_USER_WIDTH     (AXI_USER_WIDTH),
+       .AXI_ID_WIDTH       (AXI_ID_WIDTH),
+       .MASTER_SLICE_DEPTH (1),
+       .SLAVE_SLICE_DEPTH  (1)
        ) i_axi_xbar
        (
-	.clk          ( clk     ),
-	.rst_n        ( rstn    ),
-	.test_en_i    ( 1'b0    ),
-	.slave        ( slave   ),
-	.master       ( master  ),
+	.clk          (clk),
+	.rst_n        (rstn),
+	.test_en_i    (1'b0),
+	.slave        (slave),
+	.master       (master),
 	.start_addr_i ({
 			DRAMBase[AXI_ADDR_WIDTH-1:0],
 			ROMBase[AXI_ADDR_WIDTH-1:0]

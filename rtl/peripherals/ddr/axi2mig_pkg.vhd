@@ -65,49 +65,8 @@ end component;
       c0_ddr4_dq       : inout std_logic_vector(63 downto 0);
       c0_ddr4_dqs_c    : inout std_logic_vector(7 downto 0);
       c0_ddr4_dqs_t    : inout std_logic_vector(7 downto 0);
-      -- Slave Interface Write Address Ports
-      s_axi_awid           : in std_logic_vector(7 downto 0);
-      s_axi_awaddr         : in std_logic_vector(31 downto 0);
-      s_axi_awlen          : in std_logic_vector(7 downto 0);
-      s_axi_awsize         : in std_logic_vector(2 downto 0);
-      s_axi_awburst        : in std_logic_vector(1 downto 0);
-      s_axi_awlock         : in std_logic;
-      s_axi_awcache        : in std_logic_vector(3 downto 0);
-      s_axi_awprot         : in std_logic_vector(2 downto 0);
-      s_axi_awqos          : in std_logic_vector(3 downto 0);
-      s_axi_awvalid        : in    std_logic;
-      s_axi_awready        : out   std_logic;
-      --Slave Interface Write Data Ports
-      s_axi_wdata          : in std_logic_vector(AXIDW-1 downto 0);
-      s_axi_wstrb          : in std_logic_vector((AXIDW/8)-1 downto 0);
-      s_axi_wlast          : in std_logic;
-      s_axi_wvalid         : in std_logic;
-      s_axi_wready         : out std_logic;
-      -- Slave Interface Write Response Ports
-      s_axi_bready         : in std_logic;
-      s_axi_bid            : out std_logic_vector(7 downto 0);
-      s_axi_bresp          : out std_logic_vector(1 downto 0);
-      s_axi_bvalid         : out std_logic;
-      -- Slave Interface Read Address Ports
-      s_axi_arid           : in std_logic_vector(7 downto 0);
-      s_axi_araddr         : in std_logic_vector(31 downto 0);
-      s_axi_arlen          : in std_logic_vector(7 downto 0);
-      s_axi_arsize         : in std_logic_vector(2 downto 0);
-      s_axi_arburst        : in std_logic_vector(1 downto 0);
-      s_axi_arlock         : in std_logic;
-      s_axi_arcache        : in std_logic_vector(3 downto 0);
-      s_axi_arprot         : in std_logic_vector(2 downto 0);
-      s_axi_arqos          : in std_logic_vector(3 downto 0);
-      s_axi_arvalid        : in std_logic;
-      s_axi_arready        : out std_logic;
-      -- Slave Interface Read Data Ports
-      s_axi_rready         : in std_logic;
-      s_axi_rid            : out std_logic_vector(7 downto 0);
-      s_axi_rdata          : out std_logic_vector(AXIDW-1 downto 0);
-      s_axi_rresp          : out std_logic_vector(1 downto 0);
-      s_axi_rlast          : out std_logic;
-      s_axi_rvalid         : out std_logic;
-
+      ddr_axi_si       : in    axi_mosi_type;
+      ddr_axi_so       : out   axi_somi_type;
       calib_done       : out   std_logic;
       rst_n_syn        : in    std_logic;
       rst_n_async      : in    std_logic;
@@ -116,5 +75,38 @@ end component;
       ui_clk_sync_rst  : out   std_logic
     );
 end component;
+
+
+  component axi2mig_ebddr4r5 is
+    generic (
+	  AXIDW  : integer := 64
+      );
+    port (
+      c0_sys_clk_p     : in    std_logic;
+      c0_sys_clk_n     : in    std_logic;
+      c0_ddr4_act_n    : out   std_logic;
+      c0_ddr4_adr      : out   std_logic_vector(16 downto 0);
+      c0_ddr4_ba       : out   std_logic_vector(1 downto 0);
+      c0_ddr4_bg       : out   std_logic_vector(1 downto 0);
+      c0_ddr4_cke      : out   std_logic_vector(1 downto 0);
+      c0_ddr4_odt      : out   std_logic_vector(1 downto 0);
+      c0_ddr4_cs_n     : out   std_logic_vector(1 downto 0);
+      c0_ddr4_ck_t     : out   std_logic_vector(0 downto 0);
+      c0_ddr4_ck_c     : out   std_logic_vector(0 downto 0);
+      c0_ddr4_reset_n  : out   std_logic;
+      c0_ddr4_dm_dbi_n : inout std_logic_vector(8 downto 0);
+      c0_ddr4_dq       : inout std_logic_vector(71 downto 0);
+      c0_ddr4_dqs_c    : inout std_logic_vector(8 downto 0);
+      c0_ddr4_dqs_t    : inout std_logic_vector(8 downto 0);
+      ddr_axi_si       : in    axi_mosi_type;
+      ddr_axi_so       : out   axi_somi_type;
+      calib_done       : out   std_logic;
+      rst_n_syn        : in    std_logic;
+      rst_n_async      : in    std_logic;
+      clk_amba         : out    std_logic;
+      ui_clk           : out   std_logic;
+      ui_clk_sync_rst  : out   std_logic);
+  end component axi2mig_ebddr4r5;
+
 
 end axi2mig_pkg;
