@@ -410,8 +410,8 @@ class SoC_Config():
         if len(dsu_ip) == 8 and len(dsu_eth) == 12:
             self.dsu_ip = dsu_ip
             self.dsu_eth = dsu_eth
-        fp.write("CONGIG_DSU_IP = " + self.dsu_ip + "\n")
-        fp.write("CONGIG_DSU_ETH = " + self.dsu_eth + "\n")
+        fp.write("CONFIG_DSU_IP = " + self.dsu_ip + "\n")
+        fp.write("CONFIG_DSU_ETH = " + self.dsu_eth + "\n")
         fp.write("CONFIG_CLK_STR = " + str(self.clk_str.get()) + "\n")
         if self.noc.monitor_ddr.get() == 1:
             fp.write("CONFIG_MON_DDR = y\n")
