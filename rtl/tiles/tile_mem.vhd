@@ -638,6 +638,11 @@ begin
   -----------------------------------------------------------------------------
   -- Bus
   -----------------------------------------------------------------------------
+  ddr_axi_si.aw.user(9 downto 4) <= (others => '0');
+  ddr_axi_si.aw.id(9 downto 4)   <= (others => '0');
+  ddr_axi_si.w.user(9 downto 4)  <= (others => '0');
+  ddr_axi_si.ar.id(9 downto 4)   <= (others => '0');
+  ddr_axi_si.ar.user(9 downto 4) <= (others => '0');
 
   axi_crossbar_gen: if this_has_ddr /= 0 generate
   -- instantiate the bus if using on-chip DDR controller

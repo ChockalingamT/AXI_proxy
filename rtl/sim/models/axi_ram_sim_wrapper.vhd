@@ -102,6 +102,11 @@ end;
 
   begin
 
+    ddr_axi_so.b.user(9 downto 0) <= (others => '0');
+    ddr_axi_so.r.user(9 downto 0) <= (others => '0');
+    ddr_axi_so.b.id(9 downto 8) <= (others =>'0');
+    ddr_axi_so.r.id(9 downto 8) <= (others =>'0');
+
 	axiram : axi_ram_sim_model
       generic map (
         kbytes          => kbytes,
