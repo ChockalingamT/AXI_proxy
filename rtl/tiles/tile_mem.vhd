@@ -241,6 +241,8 @@ architecture rtl of tile_mem is
   signal mst2_in   : axi_somi_type;
   signal rom_out   : axi_mosi_type;
   signal rom_in    : axi_somi_type;
+  signal ddr_write : std_ulogic;
+  signal ddr_axi_si_temp   : axi_mosi_type;
 
   signal dram_aw_qos      : std_logic_vector(3 downto 0);
   signal dram_aw_atop     : std_logic_vector(5 downto 0);
@@ -400,11 +402,11 @@ begin
   -----------------------------------------------------------------------------
   -- Bus
   -----------------------------------------------------------------------------
-  ddr_axi_si.aw.user(9 downto 4) <= (others => '0');
-  ddr_axi_si.aw.id(9 downto 4)   <= (others => '0');
-  ddr_axi_si.w.user(9 downto 4)  <= (others => '0');
-  ddr_axi_si.ar.id(9 downto 4)   <= (others => '0');
-  ddr_axi_si.ar.user(9 downto 4) <= (others => '0');
+  ddr_axi_si_temp.aw.user(9 downto 4) <= (others => '0');
+  ddr_axi_si_temp.aw.id(9 downto 4)   <= (others => '0');
+  ddr_axi_si_temp.w.user(9 downto 4)  <= (others => '0');
+  ddr_axi_si_temp.ar.id(9 downto 4)   <= (others => '0');
+  ddr_axi_si_temp.ar.user(9 downto 4) <= (others => '0');
 
   axi_crossbar_gen: if this_has_ddr /= 0 generate
   -- instantiate the bus if using on-chip DDR controller
@@ -609,44 +611,44 @@ begin
       rom_r_user 	=> (others => '0'),
       rom_r_valid 	=> '0',
       rom_r_ready 	=> rom_out.r.ready,
-      dram_aw_id 	=> ddr_axi_si.aw.id(3 downto 0),
-      dram_aw_addr 	=> ddr_axi_si.aw.addr,
-      dram_aw_len 	=> ddr_axi_si.aw.len,
-      dram_aw_size 	=> ddr_axi_si.aw.size,
-      dram_aw_burst => ddr_axi_si.aw.burst,
-      dram_aw_lock 	=> ddr_axi_si.aw.lock,
-      dram_aw_cache => ddr_axi_si.aw.cache,
-      dram_aw_prot 	=> ddr_axi_si.aw.prot,
-      dram_aw_qos 	=> ddr_axi_si.aw.qos,
-      dram_aw_atop 	=> ddr_axi_si.aw.atop,
-      dram_aw_region => ddr_axi_si.aw.region,
-      dram_aw_user 	 => ddr_axi_si.aw.user(3 downto 0),
-      dram_aw_valid	=> ddr_axi_si.aw.valid,
+      dram_aw_id 	=> ddr_axi_si_temp.aw.id(3 downto 0),
+      dram_aw_addr 	=> ddr_axi_si_temp.aw.addr,
+      dram_aw_len 	=> ddr_axi_si_temp.aw.len,
+      dram_aw_size 	=> ddr_axi_si_temp.aw.size,
+      dram_aw_burst => ddr_axi_si_temp.aw.burst,
+      dram_aw_lock 	=> ddr_axi_si_temp.aw.lock,
+      dram_aw_cache => ddr_axi_si_temp.aw.cache,
+      dram_aw_prot 	=> ddr_axi_si_temp.aw.prot,
+      dram_aw_qos 	=> ddr_axi_si_temp.aw.qos,
+      dram_aw_atop 	=> ddr_axi_si_temp.aw.atop,
+      dram_aw_region => ddr_axi_si_temp.aw.region,
+      dram_aw_user 	 => ddr_axi_si_temp.aw.user(3 downto 0),
+      dram_aw_valid	=> ddr_axi_si_temp.aw.valid,
       dram_aw_ready	=> ddr_axi_so.aw.ready,
-      dram_w_data 	=> ddr_axi_si.w.data,
-      dram_w_strb 	=> ddr_axi_si.w.strb,
-      dram_w_last 	=> ddr_axi_si.w.last,
-      dram_w_user 	=> ddr_axi_si.w.user(3 downto 0),
-      dram_w_valid 	=> ddr_axi_si.w.valid,
+      dram_w_data 	=> ddr_axi_si_temp.w.data,
+      dram_w_strb 	=> ddr_axi_si_temp.w.strb,
+      dram_w_last 	=> ddr_axi_si_temp.w.last,
+      dram_w_user 	=> ddr_axi_si_temp.w.user(3 downto 0),
+      dram_w_valid 	=> ddr_axi_si_temp.w.valid,
       dram_w_ready 	=> ddr_axi_so.w.ready,
       dram_b_id 	=> ddr_axi_so.b.id(3 downto 0),
       dram_b_resp 	=> ddr_axi_so.b.resp,
       dram_b_user 	=> dram_b_user,
       
 	  dram_b_valid 	=> ddr_axi_so.b.valid,
-      dram_b_ready 	=> ddr_axi_si.b.ready,
-      dram_ar_id 	=> ddr_axi_si.ar.id(3 downto 0),
-      dram_ar_addr 	=> ddr_axi_si.ar.addr,
-      dram_ar_len 	=> ddr_axi_si.ar.len,
-      dram_ar_size 	=> ddr_axi_si.ar.size,
-      dram_ar_burst	=> ddr_axi_si.ar.burst,
-      dram_ar_lock 	=> ddr_axi_si.ar.lock,
-      dram_ar_cache => ddr_axi_si.ar.cache,
-      dram_ar_prot 	=> ddr_axi_si.ar.prot,
-      dram_ar_qos 	=> ddr_axi_si.ar.qos,
-      dram_ar_region => ddr_axi_si.ar.region,
-      dram_ar_user 	=> ddr_axi_si.ar.user(3 downto 0),
-      dram_ar_valid	=> ddr_axi_si.ar.valid,
+      dram_b_ready 	=> ddr_axi_si_temp.b.ready,
+      dram_ar_id 	=> ddr_axi_si_temp.ar.id(3 downto 0),
+      dram_ar_addr 	=> ddr_axi_si_temp.ar.addr,
+      dram_ar_len 	=> ddr_axi_si_temp.ar.len,
+      dram_ar_size 	=> ddr_axi_si_temp.ar.size,
+      dram_ar_burst	=> ddr_axi_si_temp.ar.burst,
+      dram_ar_lock 	=> ddr_axi_si_temp.ar.lock,
+      dram_ar_cache => ddr_axi_si_temp.ar.cache,
+      dram_ar_prot 	=> ddr_axi_si_temp.ar.prot,
+      dram_ar_qos 	=> ddr_axi_si_temp.ar.qos,
+      dram_ar_region => ddr_axi_si_temp.ar.region,
+      dram_ar_user 	=> ddr_axi_si_temp.ar.user(3 downto 0),
+      dram_ar_valid	=> ddr_axi_si_temp.ar.valid,
       dram_ar_ready => ddr_axi_so.ar.ready,
       dram_r_id 	=> ddr_axi_so.r.id(3 downto 0),
       dram_r_data 	=> ddr_axi_so.r.data,
@@ -654,7 +656,7 @@ begin
       dram_r_last 	=> ddr_axi_so.r.last,
       dram_r_user 	=> dram_r_user,
       dram_r_valid 	=> ddr_axi_so.r.valid,
-      dram_r_ready 	=> ddr_axi_si.r.ready
+      dram_r_ready 	=> ddr_axi_si_temp.r.ready
     );
   end generate axi_crossbar_gen;
 
@@ -695,13 +697,14 @@ begin
   mon_mem <= mon_mem_int;
 
   mon_cache <= mon_cache_int;
+  ddr_axi_si <= ddr_axi_si_temp;
 
   mon_ddr.clk <= tile_clk;
-  detect_ddr_access : process(ahbsi)
+  detect_ddr_access : process(ddr_axi_si_temp, ddr_axi_so)
   begin
     if this_has_ddr = 1 then
       mon_ddr.word_transfer <= '0';
-      if ddr_axi_si.w.valid =  '1' then
+      if ddr_axi_si_temp.w.valid = '1' and ddr_axi_so.w.ready = '1' then
         mon_ddr.word_transfer <= '1';
       end if;
     else
