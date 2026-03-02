@@ -214,7 +214,7 @@ begin
   led4_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
     port map (led(4), ddr_axi_so(0).ar.ready);
   led5_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
-    port map (led(5), ddr_axi_so(1).hready);
+    port map (led(5), ddr_axi_so(1).ar.ready);
 
   -- unused
   led6_pad : outpad generic map (tech => CFG_FABTECH, level => cmos, voltage => x12v, strength => 8)
@@ -325,17 +325,16 @@ begin
         c0_ddr4_dq       => c1_ddr4_dq,
         c0_ddr4_dqs_c    => c1_ddr4_dqs_c,
         c0_ddr4_dqs_t    => c1_ddr4_dqs_t,
-        ddr_axi_si      => ddr_axi_si(1),
-        ddr_axi_so      => ddr_axi_so(1)
         calib_done       => calib_done1,
         rst_n_syn        => migrstn1,
         rst_n_async      => mig_rstraw1,
         ui_clk           => clkm1,
         ui_clk_slow      => open,
-        ui_clk_sync_rst  => open
+        ui_clk_sync_rst  => open,
+        ddr_axi_si      => ddr_axi_si(1),
+        ddr_axi_so      => ddr_axi_so(1)
         );
 
->>>>>>> upstream/dev
     c0_ddr4_cs_n <= c0_ddr4_cs_n_vec(0 downto 0);
     c1_ddr4_cs_n <= c1_ddr4_cs_n_vec(0 downto 0);
 
@@ -378,24 +377,22 @@ begin
 
     calib_done <= '1';
     clkm       <= not clkm after 3.2 ns;
-
-    mig_ahbram1 : ahbram_sim
+    
+    mig_axiram1 : axi_ram_sim
       generic map (
-        hindex => 0,
-        tech   => 0,
-        kbytes => 1024,
-        pipe   => 0,
-        maccsz => AHBDW,
-        fname  => "ram.srec"
+        kbytes          => 2 * 1024,
+        DATA_WIDTH      => MEM_AXIDW,
+        ADDR_WIDTH      => GLOB_PHYS_ADDR_BITS,
+        STRB_WIDTH      => AW,
+        ID_WIDTH        => 8,
+        PIPELINE_OUTPUT => 0
         )
       port map(
-        rst   => rstn,
-        clk   => clkm1,
-        haddr => ddr_haddr(this_ddr_index(1)),
-        hmask => ddr_hmask(this_ddr_index(1)),
-        ahbsi => ddr_ahbsi(1),
-        ahbso => ddr_ahbso(1)
-        );
+        clk     => clkm,
+        rst     => rstn,
+        ddr_axi_si  => ddr_axi_si(1),
+        ddr_axi_so  => ddr_axi_so(1)
+     );
 
     c1_ddr4_act_n    <= '1';
     c1_ddr4_adr      <= (others => '0');
@@ -419,8 +416,6 @@ begin
 
     -- pragma translate_on
   end generate gen_mig_model;
-
-
 
 -----------------------------------------------------------------------
 ---  ETHERNET ---------------------------------------------------------

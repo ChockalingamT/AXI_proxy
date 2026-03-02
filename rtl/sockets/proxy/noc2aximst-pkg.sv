@@ -27,7 +27,6 @@ parameter integer XBURST_INCR  = 1;
 parameter integer XBURST_WRAP  = 2;
 
 typedef enum logic [4:0] {
-
     RSP_DATA     = 5'b11000,
     RSP_EDATA    = 5'b11001,
     RSP_DATA_DMA = 5'b11011,
@@ -36,50 +35,39 @@ typedef enum logic [4:0] {
 } resp_type;
 
 typedef enum logic [4:0] {
-
     REQ_GETS_W  = 5'b11000,
     REQ_GETM_W  = 5'b11001,
-
     REQ_GETS_B  = 5'b11100,
     REQ_GETS_HW = 5'b11101,
     REQ_GETM_B  = 5'b11110,
     REQ_GETM_HW = 5'b11111,
-
     AHB_RD      = 5'b11010,
     AHB_WR      = 5'b11011
 } req_type;
 
 typedef enum logic [4:0] {
-
     DMA_TO_DEV    = 5'b11001,
     DMA_FROM_DEV  = 5'b11010,
-
     REQ_DMA_READ  = 5'b11110,
     REQ_DMA_WRITE = 5'b11111
-
 } dma_req_type;
 
 typedef enum logic [2:0] {
-
     XSIZE_BYTE  = 3'b000,
     XSIZE_HWORD = 3'b001,
     XSIZE_WORD  = 3'b010,
     XSIZE_DWORD = 3'b011
-
 } transfer_size;
 
 typedef enum logic [1:0] {
-
     PREAMBLE_HEADER = 2'b10,
     PREAMBLE_TAIL   = 2'b01,
     PREAMBLE_BODY   = 2'b00,
     PREAMBLE_1FLIT  = 2'b11
-
 } preamble_type;
 
 
 typedef struct {
-
     logic [DMA_NOC_FLIT_SIZE-`PREAMBLE_WIDTH-1 : 0] dma_noc_data;
     logic [COH_NOC_WIDTH+`PREAMBLE_WIDTH-1 : 0]		coh_flit;
     logic [DMA_NOC_FLIT_SIZE-1 : 0]					dma_flit;

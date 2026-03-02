@@ -233,189 +233,14 @@ architecture rtl of tile_mem is
   signal this_local_x      : local_yx;
 
   -- AXI Crossbar Signals
-  signal mst0_aw_id       : std_logic_vector(1 downto 0);
-  signal mst0_aw_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal mst0_aw_len      : std_logic_vector(7 downto 0);
-  signal mst0_aw_size     : std_logic_vector(2 downto 0);
-  signal mst0_aw_burst    : std_logic_vector(1 downto 0);
-  signal mst0_aw_lock     : std_logic;
-  signal mst0_aw_cache    : std_logic_vector(3 downto 0);
-  signal mst0_aw_prot     : std_logic_vector(2 downto 0);
-  signal mst0_aw_qos      : std_logic_vector(3 downto 0);
-  signal mst0_aw_atop     : std_logic_vector(5 downto 0);
-  signal mst0_aw_region   : std_logic_vector(3 downto 0);
-  signal mst0_aw_user     : std_logic_vector(3 downto 0);
-  signal mst0_aw_valid    : std_logic;
-  signal mst0_aw_ready    : std_logic;
-  signal mst0_w_data      : std_logic_vector(AXIDW-1 downto 0);
-  signal mst0_w_strb      : std_logic_vector(AW-1 downto 0);
-  signal mst0_w_last      : std_logic;
-  signal mst0_w_user      : std_logic_vector(3 downto 0);
-  signal mst0_w_valid     : std_logic;
-  signal mst0_w_ready     : std_logic;
-  signal mst0_b_id        : std_logic_vector(1 downto 0);
-  signal mst0_b_resp      : std_logic_vector(1 downto 0);
-  signal mst0_b_user      : std_logic_vector(3 downto 0);
-  signal mst0_b_valid     : std_logic;
-  signal mst0_b_ready     : std_logic;
-  signal mst0_ar_id       : std_logic_vector(1 downto 0);
-  signal mst0_ar_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal mst0_ar_len      : std_logic_vector(7 downto 0);
-  signal mst0_ar_size     : std_logic_vector(2 downto 0);
-  signal mst0_ar_burst    : std_logic_vector(1 downto 0);
-  signal mst0_ar_lock     : std_logic;
-  signal mst0_ar_cache    : std_logic_vector(3 downto 0);
-  signal mst0_ar_prot     : std_logic_vector(2 downto 0);
-  signal mst0_ar_qos      : std_logic_vector(3 downto 0);
-  signal mst0_ar_region   : std_logic_vector(3 downto 0);
-  signal mst0_ar_user     : std_logic_vector(3 downto 0);
-  signal mst0_ar_valid    : std_logic;
-  signal mst0_ar_ready    : std_logic;
-  signal mst0_r_id        : std_logic_vector(1 downto 0);
-  signal mst0_r_data      : std_logic_vector(AXIDW-1 downto 0);
-  signal mst0_r_resp      : std_logic_vector(1 downto 0);
-  signal mst0_r_last      : std_logic;
-  signal mst0_r_user      : std_logic_vector(3 downto 0);
-  signal mst0_r_valid     : std_logic;
-  signal mst0_r_ready     : std_logic;
-
-  signal mst1_aw_id       : std_logic_vector(1 downto 0);
-  signal mst1_aw_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal mst1_aw_len      : std_logic_vector(7 downto 0);
-  signal mst1_aw_size     : std_logic_vector(2 downto 0);
-  signal mst1_aw_burst    : std_logic_vector(1 downto 0);
-  signal mst1_aw_lock     : std_logic;
-  signal mst1_aw_cache    : std_logic_vector(3 downto 0);
-  signal mst1_aw_prot     : std_logic_vector(2 downto 0);
-  signal mst1_aw_qos      : std_logic_vector(3 downto 0);
-  signal mst1_aw_atop     : std_logic_vector(5 downto 0);
-  signal mst1_aw_region   : std_logic_vector(3 downto 0);
-  signal mst1_aw_user     : std_logic_vector(3 downto 0);
-  signal mst1_aw_valid    : std_logic;
-  signal mst1_aw_ready    : std_logic;
-  signal mst1_w_data      : std_logic_vector(AXIDW-1 downto 0);
-  signal mst1_w_strb      : std_logic_vector(AW-1 downto 0);
-  signal mst1_w_last      : std_logic;
-  signal mst1_w_user      : std_logic_vector(3 downto 0);
-  signal mst1_w_valid     : std_logic;
-  signal mst1_w_ready     : std_logic;
-  signal mst1_b_id        : std_logic_vector(1 downto 0);
-  signal mst1_b_resp      : std_logic_vector(1 downto 0);
-  signal mst1_b_user      : std_logic_vector(3 downto 0);
-  signal mst1_b_valid     : std_logic;
-  signal mst1_b_ready     : std_logic;
-  signal mst1_ar_id       : std_logic_vector(1 downto 0);
-  signal mst1_ar_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal mst1_ar_len      : std_logic_vector(7 downto 0);
-  signal mst1_ar_size     : std_logic_vector(2 downto 0);
-  signal mst1_ar_burst    : std_logic_vector(1 downto 0);
-  signal mst1_ar_lock     : std_logic;
-  signal mst1_ar_cache    : std_logic_vector(3 downto 0);
-  signal mst1_ar_prot     : std_logic_vector(2 downto 0);
-  signal mst1_ar_qos      : std_logic_vector(3 downto 0);
-  signal mst1_ar_region   : std_logic_vector(3 downto 0);
-  signal mst1_ar_user     : std_logic_vector(3 downto 0);
-  signal mst1_ar_valid    : std_logic;
-  signal mst1_ar_ready    : std_logic;
-  signal mst1_r_id        : std_logic_vector(1 downto 0);
-  signal mst1_r_data      : std_logic_vector(AXIDW-1 downto 0);
-  signal mst1_r_resp      : std_logic_vector(1 downto 0);
-  signal mst1_r_last      : std_logic;
-  signal mst1_r_user      : std_logic_vector(3 downto 0);
-  signal mst1_r_valid     : std_logic;
-  signal mst1_r_ready     : std_logic;
-
-  signal mst2_aw_id       : std_logic_vector(1 downto 0);
-  signal mst2_aw_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal mst2_aw_len      : std_logic_vector(7 downto 0);
-  signal mst2_aw_size     : std_logic_vector(2 downto 0);
-  signal mst2_aw_burst    : std_logic_vector(1 downto 0);
-  signal mst2_aw_lock     : std_logic;
-  signal mst2_aw_cache    : std_logic_vector(3 downto 0);
-  signal mst2_aw_prot     : std_logic_vector(2 downto 0);
-  signal mst2_aw_qos      : std_logic_vector(3 downto 0);
-  signal mst2_aw_atop     : std_logic_vector(5 downto 0);
-  signal mst2_aw_region   : std_logic_vector(3 downto 0);
-  signal mst2_aw_user     : std_logic_vector(3 downto 0);
-  signal mst2_aw_valid    : std_logic;
-  signal mst2_aw_ready    : std_logic;
-  signal mst2_w_data      : std_logic_vector(AXIDW-1 downto 0);
-  signal mst2_w_strb      : std_logic_vector(AW-1 downto 0);
-  signal mst2_w_last      : std_logic;
-  signal mst2_w_user      : std_logic_vector(3 downto 0);
-  signal mst2_w_valid     : std_logic;
-  signal mst2_w_ready     : std_logic;
-  signal mst2_b_id        : std_logic_vector(1 downto 0);
-  signal mst2_b_resp      : std_logic_vector(1 downto 0);
-  signal mst2_b_user      : std_logic_vector(3 downto 0);
-  signal mst2_b_valid     : std_logic;
-  signal mst2_b_ready     : std_logic;
-  signal mst2_ar_id       : std_logic_vector(1 downto 0);
-  signal mst2_ar_addr     : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal mst2_ar_len      : std_logic_vector(7 downto 0);
-  signal mst2_ar_size     : std_logic_vector(2 downto 0);
-  signal mst2_ar_burst    : std_logic_vector(1 downto 0);
-  signal mst2_ar_lock     : std_logic;
-  signal mst2_ar_cache    : std_logic_vector(3 downto 0);
-  signal mst2_ar_prot     : std_logic_vector(2 downto 0);
-  signal mst2_ar_qos      : std_logic_vector(3 downto 0);
-  signal mst2_ar_region   : std_logic_vector(3 downto 0);
-  signal mst2_ar_user     : std_logic_vector(3 downto 0);
-  signal mst2_ar_valid    : std_logic;
-  signal mst2_ar_ready    : std_logic;
-  signal mst2_r_id        : std_logic_vector(1 downto 0);
-  signal mst2_r_data      : std_logic_vector(AXIDW-1 downto 0);
-  signal mst2_r_resp      : std_logic_vector(1 downto 0);
-  signal mst2_r_last      : std_logic;
-  signal mst2_r_user      : std_logic_vector(3 downto 0);
-  signal mst2_r_valid     : std_logic;
-  signal mst2_r_ready     : std_logic;
-
-  signal rom_aw_id        : std_logic_vector(3 downto 0);
-  signal rom_aw_addr      : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal rom_aw_len       : std_logic_vector(7 downto 0);
-  signal rom_aw_size      : std_logic_vector(2 downto 0);
-  signal rom_aw_burst     : std_logic_vector(1 downto 0);
-  signal rom_aw_lock      : std_logic;
-  signal rom_aw_cache     : std_logic_vector(3 downto 0);
-  signal rom_aw_prot      : std_logic_vector(2 downto 0);
-  signal rom_aw_qos       : std_logic_vector(3 downto 0);
-  signal rom_aw_atop      : std_logic_vector(5 downto 0);
-  signal rom_aw_region    : std_logic_vector(3 downto 0);
-  signal rom_aw_user      : std_logic_vector(3 downto 0);
-  signal rom_aw_valid     : std_logic;
-  signal rom_aw_ready     : std_logic;
-  signal rom_w_data       : std_logic_vector(AXIDW-1 downto 0);
-  signal rom_w_strb       : std_logic_vector(AW-1 downto 0);
-  signal rom_w_last       : std_logic;
-  signal rom_w_user       : std_logic_vector(3 downto 0);
-  signal rom_w_valid      : std_logic;
-  signal rom_w_ready      : std_logic;
-  signal rom_b_id         : std_logic_vector(3 downto 0);
-  signal rom_b_resp       : std_logic_vector(1 downto 0);
-  signal rom_b_user       : std_logic_vector(3 downto 0);
-  signal rom_b_valid      : std_logic;
-  signal rom_b_ready      : std_logic;
-  signal rom_ar_id        : std_logic_vector(3 downto 0);
-  signal rom_ar_addr      : std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-  signal rom_ar_len       : std_logic_vector(7 downto 0);
-  signal rom_ar_size      : std_logic_vector(2 downto 0);
-  signal rom_ar_burst     : std_logic_vector(1 downto 0);
-  signal rom_ar_lock      : std_logic;
-  signal rom_ar_cache     : std_logic_vector(3 downto 0);
-  signal rom_ar_prot      : std_logic_vector(2 downto 0);
-  signal rom_ar_qos       : std_logic_vector(3 downto 0);
-  signal rom_ar_region    : std_logic_vector(3 downto 0);
-  signal rom_ar_user      : std_logic_vector(3 downto 0);
-  signal rom_ar_valid     : std_logic;
-  signal rom_ar_ready     : std_logic;
-  signal rom_r_id         : std_logic_vector(3 downto 0);
-  signal rom_r_data       : std_logic_vector(AXIDW-1 downto 0);
-  signal rom_r_resp       : std_logic_vector(1 downto 0);
-  signal rom_r_last       : std_logic;
-  signal rom_r_user       : std_logic_vector(3 downto 0);
-  signal rom_r_valid      : std_logic;
-  signal rom_r_ready      : std_logic;
+  signal mst0_out  : axi_mosi_type;
+  signal mst0_in   : axi_somi_type;
+  signal mst1_out  : axi_mosi_type;
+  signal mst1_in   : axi_somi_type;
+  signal mst2_out  : axi_mosi_type;
+  signal mst2_in   : axi_somi_type;
+  signal rom_out   : axi_mosi_type;
+  signal rom_in    : axi_somi_type;
 
   signal dram_aw_qos      : std_logic_vector(3 downto 0);
   signal dram_aw_atop     : std_logic_vector(5 downto 0);
@@ -446,90 +271,27 @@ architecture rtl of tile_mem is
   attribute mark_debug of remote_ahbm_snd_data_in : signal is "true"; 
   attribute mark_debug of remote_ahbm_snd_full : signal is "true";
   
-  attribute mark_debug of  mst0_aw_id       : signal is "true";
-  attribute mark_debug of  mst0_aw_addr     : signal is "true";
-  attribute mark_debug of  mst0_aw_len      : signal is "true";
-  attribute mark_debug of  mst0_aw_size     : signal is "true";
-  attribute mark_debug of  mst0_aw_burst    : signal is "true";
-  attribute mark_debug of  mst0_aw_lock     : signal is "true";
-  attribute mark_debug of  mst0_aw_cache    : signal is "true";
-  attribute mark_debug of  mst0_aw_prot     : signal is "true";
-  attribute mark_debug of  mst0_aw_qos      : signal is "true";
-  attribute mark_debug of  mst0_aw_atop     : signal is "true";
-  attribute mark_debug of  mst0_aw_region   : signal is "true";
-  attribute mark_debug of  mst0_aw_user     : signal is "true";
-  attribute mark_debug of  mst0_aw_valid    : signal is "true";
-  attribute mark_debug of  mst0_aw_ready    : signal is "true";
-  attribute mark_debug of  mst0_w_data      : signal is "true";
-  attribute mark_debug of  mst0_w_strb      : signal is "true";
-  attribute mark_debug of  mst0_w_last      : signal is "true";
-  attribute mark_debug of  mst0_w_user      : signal is "true";
-  attribute mark_debug of  mst0_w_valid     : signal is "true";
-  attribute mark_debug of mst0_w_ready     : signal is "true";
+  --attribute mark_debug of coherence_req_rdreq        : signal is "true"; 
+  --attribute mark_debug of coherence_req_data_out     : signal is "true"; 
+  --attribute mark_debug of coherence_req_empty        : signal is "true"; 
+  --attribute mark_debug of coherence_fwd_wrreq        : signal is "true"; 
+  --attribute mark_debug of coherence_fwd_data_in      : signal is "true"; 
+  --attribute mark_debug of coherence_fwd_full         : signal is "true"; 
+  --attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true"; 
+  --attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true"; 
+  --attribute mark_debug of coherence_rsp_snd_full     : signal is "true"; 
+  --attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true"; 
+  --attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
+  --attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true"; 
 
-  attribute mark_debug of  mst1_aw_id       : signal is "true";
-  attribute mark_debug of  mst1_aw_addr     : signal is "true";
-  attribute mark_debug of  mst1_aw_len      : signal is "true";
-  attribute mark_debug of  mst1_aw_size     : signal is "true";
-  attribute mark_debug of  mst1_aw_burst    : signal is "true";
-  attribute mark_debug of  mst1_aw_lock     : signal is "true";
-  attribute mark_debug of  mst1_aw_cache    : signal is "true";
-  attribute mark_debug of  mst1_aw_prot     : signal is "true";
-  attribute mark_debug of  mst1_aw_qos      : signal is "true";
-  attribute mark_debug of  mst1_aw_atop     : signal is "true";
-  attribute mark_debug of  mst1_aw_region   : signal is "true";
-  attribute mark_debug of  mst1_aw_user     : signal is "true";
-  attribute mark_debug of  mst1_aw_valid    : signal is "true";
-  attribute mark_debug of  mst1_aw_ready    : signal is "true";
-  attribute mark_debug of  mst1_w_data      : signal is "true";
-  attribute mark_debug of  mst1_w_strb      : signal is "true";
-  attribute mark_debug of  mst1_w_last      : signal is "true";
-  attribute mark_debug of  mst1_w_user      : signal is "true";
-  attribute mark_debug of  mst1_w_valid     : signal is "true";
-  attribute mark_debug of mst1_w_ready     : signal is "true";
-  
-  attribute mark_debug of  mst2_aw_id       : signal is "true";
-  attribute mark_debug of  mst2_aw_addr     : signal is "true";
-  attribute mark_debug of  mst2_aw_len      : signal is "true";
-  attribute mark_debug of  mst2_aw_size     : signal is "true";
-  attribute mark_debug of  mst2_aw_burst    : signal is "true";
-  attribute mark_debug of  mst2_aw_lock     : signal is "true";
-  attribute mark_debug of  mst2_aw_cache    : signal is "true";
-  attribute mark_debug of  mst2_aw_prot     : signal is "true";
-  attribute mark_debug of  mst2_aw_qos      : signal is "true";
-  attribute mark_debug of  mst2_aw_atop     : signal is "true";
-  attribute mark_debug of  mst2_aw_region   : signal is "true";
-  attribute mark_debug of  mst2_aw_user     : signal is "true";
-  attribute mark_debug of  mst2_aw_valid    : signal is "true";
-  attribute mark_debug of  mst2_aw_ready    : signal is "true";
-  attribute mark_debug of  mst2_w_data      : signal is "true";
-  attribute mark_debug of  mst2_w_strb      : signal is "true";
-  attribute mark_debug of  mst2_w_last      : signal is "true";
-  attribute mark_debug of  mst2_w_user      : signal is "true";
-  attribute mark_debug of  mst2_w_valid     : signal is "true";
-  attribute mark_debug of  mst2_w_ready     : signal is "true";
-  
-  attribute mark_debug of coherence_req_rdreq        : signal is "true"; 
-  attribute mark_debug of coherence_req_data_out     : signal is "true"; 
-  attribute mark_debug of coherence_req_empty        : signal is "true"; 
-  attribute mark_debug of coherence_fwd_wrreq        : signal is "true"; 
-  attribute mark_debug of coherence_fwd_data_in      : signal is "true"; 
-  attribute mark_debug of coherence_fwd_full         : signal is "true"; 
-  attribute mark_debug of coherence_rsp_snd_wrreq    : signal is "true"; 
-  attribute mark_debug of coherence_rsp_snd_data_in  : signal is "true"; 
-  attribute mark_debug of coherence_rsp_snd_full     : signal is "true"; 
-  attribute mark_debug of coherence_rsp_rcv_rdreq    : signal is "true"; 
-  attribute mark_debug of coherence_rsp_rcv_data_out : signal is "true";
-  attribute mark_debug of coherence_rsp_rcv_empty    : signal is "true"; 
-
-  attribute mark_debug of dma_rcv_rdreq           : signal is "true"; 
-  attribute mark_debug of dma_rcv_data_out        : signal is "true"; 
-  attribute mark_debug of dma_rcv_empty           : signal is "true"; 
-  attribute mark_debug of dma_snd_wrreq           : signal is "true"; 
-  attribute mark_debug of dma_snd_data_in         : signal is "true"; 
-  attribute mark_debug of dma_snd_full            : signal is "true"; 
-  attribute mark_debug of dma_snd_atleast_4slots  : signal is "true"; 
-  attribute mark_debug of dma_snd_exactly_3slots  : signal is "true"; 
+  --attribute mark_debug of dma_rcv_rdreq           : signal is "true"; 
+  --attribute mark_debug of dma_rcv_data_out        : signal is "true"; 
+  --attribute mark_debug of dma_rcv_empty           : signal is "true"; 
+  --attribute mark_debug of dma_snd_wrreq           : signal is "true"; 
+  --attribute mark_debug of dma_snd_data_in         : signal is "true"; 
+  --attribute mark_debug of dma_snd_full            : signal is "true"; 
+  --attribute mark_debug of dma_snd_atleast_4slots  : signal is "true"; 
+  --attribute mark_debug of dma_snd_exactly_3slots  : signal is "true"; 
 
 begin
 
@@ -662,184 +424,183 @@ begin
       DRAMLength 	=> X"4000_0000"
     )
     port map (
-      clk 		=> tile_clk,
-      rstn 		=> rst,
-      mst0_aw_id 	=> mst0_aw_id,
-      mst0_aw_addr 	=> mst0_aw_addr,
-      mst0_aw_len 	=> mst0_aw_len,
-      mst0_aw_size 	=> mst0_aw_size,
-      mst0_aw_burst 	=> mst0_aw_burst,
-      mst0_aw_lock 	=> mst0_aw_lock,
-      mst0_aw_cache 	=> (others => '0'),
-      mst0_aw_prot 	=> mst0_aw_prot,
+      clk 		    => tile_clk,
+      rstn 		    => rst,
+      mst0_aw_id 	=> mst0_out.aw.id(1 downto 0),
+      mst0_aw_addr 	=> mst0_out.aw.addr,
+      mst0_aw_len 	=> mst0_out.aw.len,
+      mst0_aw_size 	=> mst0_out.aw.size,
+      mst0_aw_burst => mst0_out.aw.burst,
+      mst0_aw_lock 	=> mst0_out.aw.lock,
+      mst0_aw_cache => (others => '0'),
+      mst0_aw_prot 	=> mst0_out.aw.prot,
       mst0_aw_qos 	=> (others => '0'),
       mst0_aw_atop 	=> (others => '0'),
-      mst0_aw_region 	=> (others => '0'),
+      mst0_aw_region => (others => '0'),
       mst0_aw_user 	=> (others => '0'),
-      mst0_aw_valid 	=> mst0_aw_valid,
-      mst0_aw_ready 	=> mst0_aw_ready,
-      mst0_w_data 	=> mst0_w_data,
-      mst0_w_strb 	=> mst0_w_strb,
-      mst0_w_last 	=> mst0_w_last,
+      mst0_aw_valid => mst0_out.aw.valid,
+      mst0_aw_ready => mst0_in.aw.ready,
+      mst0_w_data 	=> mst0_out.w.data,
+      mst0_w_strb 	=> mst0_out.w.strb,
+      mst0_w_last 	=> mst0_out.w.last,
       mst0_w_user 	=> (others => '0'),
-      mst0_w_valid 	=> mst0_w_valid,
-      mst0_w_ready 	=> mst0_w_ready,
-      mst0_b_id 	=> mst0_b_id,
-      mst0_b_resp 	=> mst0_b_resp,
-      mst0_b_user 	=> mst0_b_user,
-      mst0_b_valid 	=> mst0_b_valid,
-      mst0_b_ready 	=> mst0_b_ready,
-      mst0_ar_id 	=> mst0_ar_id,
-      mst0_ar_addr 	=> mst0_ar_addr,
-      mst0_ar_len 	=> mst0_ar_len,
-      mst0_ar_size 	=> mst0_ar_size,
-      mst0_ar_burst 	=> mst0_ar_burst,
-      mst0_ar_lock 	=> mst0_ar_lock,
-      mst0_ar_cache 	=> (others => '0'),
-      mst0_ar_prot 	=> mst0_ar_prot,
-      mst0_ar_qos 	=> (others => '0'),
-      mst0_ar_region 	=> (others => '0'),
-      mst0_ar_user 	=> (others => '0'),
-      mst0_ar_valid 	=> mst0_ar_valid,
-      mst0_ar_ready 	=> mst0_ar_ready,
-      mst0_r_id 	=> mst0_r_id,
-      mst0_r_data 	=> mst0_r_data,
-      mst0_r_resp 	=> mst0_r_resp,
-      mst0_r_last 	=> mst0_r_last,
-      mst0_r_user 	=> mst0_r_user,
-      mst0_r_valid	=> mst0_r_valid,
-      mst0_r_ready 	=> mst0_r_ready,
+      mst0_w_valid 	=> mst0_out.w.valid,
+      mst0_w_ready 	=> mst0_in.w.ready,
+      mst0_b_id 	=> mst0_in.b.id(1 downto 0),
+      mst0_b_resp 	=> mst0_in.b.resp,
+      mst0_b_user 	=> mst0_in.b.user(3 downto 0),
+      mst0_b_valid 	=> mst0_in.b.valid,
+      mst0_b_ready 	=> mst0_out.b.ready,
+      mst0_ar_id 	=> mst0_out.ar.id(1 downto 0),
+      mst0_ar_addr 	=> mst0_out.ar.addr,
+      mst0_ar_len 	=> mst0_out.ar.len,
+      mst0_ar_size 	=> mst0_out.ar.size,
+      mst0_ar_burst => mst0_out.ar.burst,
+      mst0_ar_lock 	=> mst0_out.ar.lock,
+      mst0_ar_cache => (others => '0'),
+      mst0_ar_prot 	=> mst0_out.ar.prot,
+      mst0_ar_qos 	 => (others => '0'),
+      mst0_ar_region => (others => '0'),
+      mst0_ar_user 	 => (others => '0'),
+      mst0_ar_valid => mst0_out.ar.valid,
+      mst0_ar_ready => mst0_in.ar.ready,
+      mst0_r_id 	=> mst0_in.r.id(1 downto 0),
+      mst0_r_data 	=> mst0_in.r.data,
+      mst0_r_resp 	=> mst0_in.r.resp,
+      mst0_r_last 	=> mst0_in.r.last,
+      mst0_r_user 	=> mst0_in.r.user(3 downto 0),
+      mst0_r_valid	=> mst0_in.r.valid,
+      mst0_r_ready 	=> mst0_out.r.ready,
 
-      mst1_aw_id 	=> mst1_aw_id,
-      mst1_aw_addr 	=> mst1_aw_addr,
-      mst1_aw_len 	=> mst1_aw_len,
-      mst1_aw_size 	=> mst1_aw_size,
-      mst1_aw_burst => mst1_aw_burst,
-      mst1_aw_lock 	=> mst1_aw_lock,
+      mst1_aw_id 	=> mst1_out.aw.id(1 downto 0),
+      mst1_aw_addr 	=> mst1_out.aw.addr,
+      mst1_aw_len 	=> mst1_out.aw.len,
+      mst1_aw_size 	=> mst1_out.aw.size,
+      mst1_aw_burst => mst1_out.aw.burst,
+      mst1_aw_lock 	=> mst1_out.aw.lock,
       mst1_aw_cache => (others => '0'),
-      mst1_aw_prot 	=> mst1_aw_prot,
+      mst1_aw_prot 	=> mst1_out.aw.prot,
       mst1_aw_qos 	=> (others => '0'),
       mst1_aw_atop 	=> (others => '0'),
       mst1_aw_region => (others => '0'),
       mst1_aw_user 	=> (others => '0'),
-      mst1_aw_valid	=> mst1_aw_valid,
-      mst1_aw_ready => mst1_aw_ready,
-      mst1_w_data 	=> mst1_w_data,
-      mst1_w_strb 	=> mst1_w_strb,
-      mst1_w_last 	=> mst1_w_last,
+      mst1_aw_valid	=> mst1_out.aw.valid,
+      mst1_aw_ready => mst1_in.aw.ready,
+      mst1_w_data 	=> mst1_out.w.data,
+      mst1_w_strb 	=> mst1_out.w.strb,
+      mst1_w_last 	=> mst1_out.w.last,
       mst1_w_user 	=> (others => '0'),
-      mst1_w_valid 	=> mst1_w_valid,
-      mst1_w_ready 	=> mst1_w_ready,
-      mst1_b_id 	=> mst1_b_id,
-      mst1_b_resp 	=> mst1_b_resp,
-      mst1_b_user 	=> mst1_b_user,
-      mst1_b_valid 	=> mst1_b_valid,
-      mst1_b_ready 	=> mst1_b_ready,
-      mst1_ar_id	=> mst1_ar_id,
-      mst1_ar_addr 	=> mst1_ar_addr,
-      mst1_ar_len 	=> mst1_ar_len,
-      mst1_ar_size 	=> mst1_ar_size,
-      mst1_ar_burst	=> mst1_ar_burst,
-      mst1_ar_lock 	=> mst1_ar_lock,
+      mst1_w_valid 	=> mst1_out.w.valid,
+      mst1_w_ready 	=> mst1_in.w.ready,
+      mst1_b_id 	=> mst1_in.b.id(1 downto 0),
+      mst1_b_resp 	=> mst1_in.b.resp,
+      mst1_b_user 	=> mst1_in.b.user(3 downto 0),
+      mst1_b_valid 	=> mst1_in.b.valid,
+      mst1_b_ready 	=> mst1_out.b.ready,
+      mst1_ar_id	=> mst1_out.ar.id(1 downto 0),
+      mst1_ar_addr 	=> mst1_out.ar.addr,
+      mst1_ar_len 	=> mst1_out.ar.len,
+      mst1_ar_size 	=> mst1_out.ar.size,
+      mst1_ar_burst	=> mst1_out.ar.burst,
+      mst1_ar_lock 	=> mst1_out.ar.lock,
       mst1_ar_cache	=> (others => '0'),
-      mst1_ar_prot 	=> mst1_ar_prot,
+      mst1_ar_prot 	=> mst1_out.ar.prot,
       mst1_ar_qos 	=> (others => '0'),
       mst1_ar_region => (others => '0'),
       mst1_ar_user 	=> (others => '0'),
-      mst1_ar_valid => mst1_ar_valid,
-      mst1_ar_ready => mst1_ar_ready,
-      mst1_r_id 	=> mst1_r_id,
-      mst1_r_data 	=> mst1_r_data,
-      mst1_r_resp 	=> mst1_r_resp,
-      mst1_r_last 	=> mst1_r_last,
-      mst1_r_user 	=> mst1_r_user,
-      mst1_r_valid 	=> mst1_r_valid,
-      mst1_r_ready 	=> mst1_r_ready,
+      mst1_ar_valid => mst1_out.ar.valid,
+      mst1_ar_ready => mst1_in.ar.ready,
+      mst1_r_id 	=> mst1_in.r.id(1 downto 0),
+      mst1_r_data 	=> mst1_in.r.data,
+      mst1_r_resp 	=> mst1_in.r.resp,
+      mst1_r_last 	=> mst1_in.r.last,
+      mst1_r_user 	=> mst1_in.r.user(3 downto 0),
+      mst1_r_valid 	=> mst1_in.r.valid,
+      mst1_r_ready 	=> mst1_out.r.ready,
 
-      mst2_aw_id 	=> mst2_aw_id,
-      mst2_aw_addr 	=> mst2_aw_addr,
-      mst2_aw_len 	=> mst2_aw_len,
-      mst2_aw_size 	=> mst2_aw_size,
-      mst2_aw_burst => mst2_aw_burst,
-      mst2_aw_lock 	=> mst2_aw_lock,
+      mst2_aw_id 	=> mst2_out.aw.id(1 downto 0),
+      mst2_aw_addr 	=> mst2_out.aw.addr,
+      mst2_aw_len 	=> mst2_out.aw.len,
+      mst2_aw_size 	=> mst2_out.aw.size,
+      mst2_aw_burst => mst2_out.aw.burst,
+      mst2_aw_lock 	=> mst2_out.aw.lock,
       mst2_aw_cache => (others => '0'),
-      mst2_aw_prot 	=> mst2_aw_prot,
+      mst2_aw_prot 	=> mst2_out.aw.prot,
       mst2_aw_qos 	=> (others => '0'),
       mst2_aw_atop 	=> (others => '0'),
       mst2_aw_region => (others => '0'),
       mst2_aw_user 	=> (others => '0'),
-      mst2_aw_valid	=> mst2_aw_valid,
-      mst2_aw_ready => mst2_aw_ready,
-      mst2_w_data 	=> mst2_w_data,
-      mst2_w_strb 	=> mst2_w_strb,
-      mst2_w_last 	=> mst2_w_last,
+      mst2_aw_valid	=> mst2_out.aw.valid,
+      mst2_aw_ready => mst2_in.aw.ready,
+      mst2_w_data 	=> mst2_out.w.data,
+      mst2_w_strb 	=> mst2_out.w.strb,
+      mst2_w_last 	=> mst2_out.w.last,
       mst2_w_user 	=> (others => '0'),
-      mst2_w_valid 	=> mst2_w_valid,
-      mst2_w_ready 	=> mst2_w_ready,
-      mst2_b_id 	=> mst2_b_id,
-      mst2_b_resp 	=> mst2_b_resp,
-      mst2_b_user 	=> mst2_b_user,
-      mst2_b_valid 	=> mst2_b_valid,
-      mst2_b_ready 	=> mst2_b_ready,
-      mst2_ar_id	=> mst2_ar_id,
-      mst2_ar_addr 	=> mst2_ar_addr,
-      mst2_ar_len 	=> mst2_ar_len,
-      mst2_ar_size 	=> mst2_ar_size,
-      mst2_ar_burst => mst2_ar_burst,
-      mst2_ar_lock 	=> mst2_ar_lock,
+      mst2_w_valid 	=> mst2_out.w.valid,
+      mst2_w_ready 	=> mst2_in.w.ready,
+      mst2_b_id 	=> mst2_in.b.id(1 downto 0),
+      mst2_b_resp 	=> mst2_in.b.resp,
+      mst2_b_user 	=> mst2_in.b.user(3 downto 0),
+      mst2_b_valid 	=> mst2_in.b.valid,
+      mst2_b_ready 	=> mst2_out.b.ready,
+      mst2_ar_id	=> mst2_out.ar.id(1 downto 0),
+      mst2_ar_addr 	=> mst2_out.ar.addr,
+      mst2_ar_len 	=> mst2_out.ar.len,
+      mst2_ar_size 	=> mst2_out.ar.size,
+      mst2_ar_burst => mst2_out.ar.burst,
+      mst2_ar_lock 	=> mst2_out.ar.lock,
       mst2_ar_cache => (others => '0'),
-      mst2_ar_prot 	=> mst2_ar_prot,
+      mst2_ar_prot 	=> mst2_out.ar.prot,
       mst2_ar_qos 	=> (others => '0'),
       mst2_ar_region => (others => '0'),
       mst2_ar_user 	=> (others => '0'),
-      mst2_ar_valid => mst2_ar_valid,
-      mst2_ar_ready => mst2_ar_ready,
-      mst2_r_id 	=> mst2_r_id,
-      mst2_r_data 	=> mst2_r_data,
-      mst2_r_resp 	=> mst2_r_resp,
-      mst2_r_last 	=> mst2_r_last,
-      mst2_r_user 	=> mst2_r_user,
-      mst2_r_valid 	=> mst2_r_valid,
-      mst2_r_ready 	=> mst2_r_ready,
+      mst2_ar_valid => mst2_out.ar.valid,
+      mst2_ar_ready => mst2_in.ar.ready,
+      mst2_r_id 	=> mst2_in.r.id(1 downto 0),
+      mst2_r_data 	=> mst2_in.r.data,
+      mst2_r_resp 	=> mst2_in.r.resp,
+      mst2_r_last 	=> mst2_in.r.last,
+      mst2_r_user 	=> mst2_in.r.user(3 downto 0),
+      mst2_r_valid 	=> mst2_in.r.valid,
+      mst2_r_ready 	=> mst2_out.r.ready,
 
-
-      rom_aw_id 	=> rom_aw_id,
-      rom_aw_addr 	=> rom_aw_addr,
-      rom_aw_len 	=> rom_aw_len,
-      rom_aw_size 	=> rom_aw_size,
-      rom_aw_burst 	=> rom_aw_burst,
-      rom_aw_lock 	=> rom_aw_lock,
-      rom_aw_cache 	=> rom_aw_cache,
-      rom_aw_prot 	=> rom_aw_prot,
-      rom_aw_qos 	=> rom_aw_qos,
-      rom_aw_atop 	=> rom_aw_atop,
-      rom_aw_region 	=> rom_aw_region,
-      rom_aw_user 	=> rom_aw_user,
-      rom_aw_valid 	=> rom_aw_valid,
+      rom_aw_id 	=> rom_out.aw.id(3 downto 0),
+      rom_aw_addr 	=> rom_out.aw.addr,
+      rom_aw_len 	=> rom_out.aw.len,
+      rom_aw_size 	=> rom_out.aw.size,
+      rom_aw_burst 	=> rom_out.aw.burst,
+      rom_aw_lock 	=> rom_out.aw.lock,
+      rom_aw_cache 	=> rom_out.aw.cache,
+      rom_aw_prot 	=> rom_out.aw.prot,
+      rom_aw_qos 	=> rom_out.aw.qos,
+      rom_aw_atop 	=> rom_out.aw.atop,
+      rom_aw_region => rom_out.aw.region,
+      rom_aw_user 	=> rom_out.aw.user(3 downto 0),
+      rom_aw_valid 	=> rom_out.aw.valid,
       rom_aw_ready 	=> '0',
-      rom_w_data 	=> rom_w_data,
-      rom_w_strb 	=> rom_w_strb,
-      rom_w_last 	=> rom_w_last,
-      rom_w_user 	=> rom_w_user,
-      rom_w_valid 	=> rom_w_valid,
+      rom_w_data 	=> rom_out.w.data,
+      rom_w_strb 	=> rom_out.w.strb,
+      rom_w_last 	=> rom_out.w.last,
+      rom_w_user 	=> rom_out.w.user(3 downto 0),
+      rom_w_valid 	=> rom_out.w.valid,
       rom_w_ready 	=> '0',
       rom_b_id 		=> (others => '0'),
       rom_b_resp 	=> (others => '0'),
       rom_b_user 	=> (others => '0'),
       rom_b_valid 	=> '0',
-      rom_b_ready 	=> rom_b_ready,
-      rom_ar_id 	=> rom_ar_id,
-      rom_ar_addr 	=> rom_ar_addr,
-      rom_ar_len 	=> rom_ar_len,
-      rom_ar_size 	=> rom_ar_size,
-      rom_ar_burst 	=> rom_ar_burst,
-      rom_ar_lock 	=> rom_ar_lock,
-      rom_ar_cache 	=> rom_ar_cache,
-      rom_ar_prot 	=> rom_ar_prot,
-      rom_ar_qos 	=> rom_ar_qos,
-      rom_ar_region 	=> rom_ar_region,
-      rom_ar_user 	=> rom_ar_user,
-      rom_ar_valid 	=> rom_ar_valid,
+      rom_b_ready 	=> rom_out.b.ready,
+      rom_ar_id 	=> rom_out.ar.id(3 downto 0),
+      rom_ar_addr 	=> rom_out.ar.addr,
+      rom_ar_len 	=> rom_out.ar.len,
+      rom_ar_size 	=> rom_out.ar.size,
+      rom_ar_burst 	=> rom_out.ar.burst,
+      rom_ar_lock 	=> rom_out.ar.lock,
+      rom_ar_cache 	=> rom_out.ar.cache,
+      rom_ar_prot 	=> rom_out.ar.prot,
+      rom_ar_qos 	=> rom_out.ar.qos,
+      rom_ar_region => rom_out.ar.region,
+      rom_ar_user 	=> rom_out.ar.user(3 downto 0),
+      rom_ar_valid 	=> rom_out.ar.valid,
       rom_ar_ready 	=> '0',
       rom_r_id 		=> (others => '0'),
       rom_r_data 	=> (others => '0'),
@@ -847,8 +608,7 @@ begin
       rom_r_last 	=> '0',
       rom_r_user 	=> (others => '0'),
       rom_r_valid 	=> '0',
-      rom_r_ready 	=> rom_r_ready,
-
+      rom_r_ready 	=> rom_out.r.ready,
       dram_aw_id 	=> ddr_axi_si.aw.id(3 downto 0),
       dram_aw_addr 	=> ddr_axi_si.aw.addr,
       dram_aw_len 	=> ddr_axi_si.aw.len,
@@ -941,9 +701,9 @@ begin
   begin
     if this_has_ddr = 1 then
       mon_ddr.word_transfer <= '0';
---      if ahbsi.hready =  '1' and ahbsi.htrans /= HTRANS_IDLE then
---        mon_ddr.word_transfer <= '1';
---      end if;
+      if ddr_axi_si.w.valid =  '1' then
+        mon_ddr.word_transfer <= '1';
+      end if;
     else
       -- TODO: connect to FPGA link activity
       mon_ddr.word_transfer <= '0';
@@ -995,43 +755,43 @@ begin
         local_y 	=> this_local_y,
         local_x 	=> this_local_x,
         --AR Channel
-        AR_ID 		=> mst0_ar_id,
-        AR_ADDR 	=> mst0_ar_addr,
-        AR_LEN 		=> mst0_ar_len,
-        AR_SIZE 	=> mst0_ar_size,
-        AR_BURST 	=> mst0_ar_burst,
-        AR_LOCK 	=> mst0_ar_lock,
-        AR_PROT 	=> mst0_ar_prot,
-        AR_VALID 	=> mst0_ar_valid,
-        AR_READY 	=> mst0_ar_ready,
+        AR_ID 		=> mst0_out.ar.id(1 downto 0),
+        AR_ADDR 	=> mst0_out.ar.addr,
+        AR_LEN 		=> mst0_out.ar.len,
+        AR_SIZE 	=> mst0_out.ar.size,
+        AR_BURST 	=> mst0_out.ar.burst,
+        AR_LOCK 	=> mst0_out.ar.lock,
+        AR_PROT 	=> mst0_out.ar.prot,
+        AR_VALID 	=> mst0_out.ar.valid,
+        AR_READY 	=> mst0_in.ar.ready,
         --R Channel
-        R_ID    	=> mst0_r_id,
-        R_DATA  	=> mst0_r_data,
-        R_RESP  	=> mst0_r_resp,
-        R_LAST  	=> mst0_r_last,
-        R_VALID 	=> mst0_r_valid,
-        R_READY 	=> mst0_r_ready,
+        R_ID    	=> mst0_in.r.id(1 downto 0),
+        R_DATA  	=> mst0_in.r.data,
+        R_RESP  	=> mst0_in.r.resp,
+        R_LAST  	=> mst0_in.r.last,
+        R_VALID 	=> mst0_in.r.valid,
+        R_READY 	=> mst0_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst0_aw_id,
-        AW_ADDR 	=> mst0_aw_addr,
-        AW_LEN 		=> mst0_aw_len,
-        AW_SIZE 	=> mst0_aw_size,
-        AW_BURST 	=> mst0_aw_burst,
-        AW_LOCK 	=> mst0_aw_lock,
-        AW_PROT 	=> mst0_aw_prot,
-        AW_VALID 	=> mst0_aw_valid,
-        AW_READY 	=> mst0_aw_ready,
+        AW_ID 		=> mst0_out.aw.id(1 downto 0),
+        AW_ADDR 	=> mst0_out.aw.addr,
+        AW_LEN 		=> mst0_out.aw.len,
+        AW_SIZE 	=> mst0_out.aw.size,
+        AW_BURST 	=> mst0_out.aw.burst,
+        AW_LOCK 	=> mst0_out.aw.lock,
+        AW_PROT 	=> mst0_out.aw.prot,
+        AW_VALID 	=> mst0_out.aw.valid,
+        AW_READY 	=> mst0_in.aw.ready,
         --W Channel
-        W_DATA 		=> mst0_w_data,
-        W_STRB 		=> mst0_w_strb,
-        W_LAST 		=> mst0_w_last,
-        W_VALID 	=> mst0_w_valid,
-        W_READY 	=> mst0_w_ready,
+        W_DATA 		=> mst0_out.w.data,
+        W_STRB 		=> mst0_out.w.strb,
+        W_LAST 		=> mst0_out.w.last,
+        W_VALID 	=> mst0_out.w.valid,
+        W_READY 	=> mst0_in.w.ready,
         --B Channel
-        B_ID 		=> mst0_b_id,
-        B_RESP 		=> mst0_b_resp,
-        B_VALID 	=> mst0_b_valid,
-        B_READY 	=> mst0_b_ready,
+        B_ID 		=> mst0_in.b.id(1 downto 0),
+        B_RESP 		=> mst0_in.b.resp,
+        B_VALID 	=> mst0_in.b.valid,
+        B_READY 	=> mst0_out.b.ready,
         --NoC
         coherence_req_rdreq 		=> coherence_req_rdreq,
         coherence_req_data_out 		=> coherence_req_data_out,
@@ -1074,43 +834,43 @@ begin
         local_y 	=> this_local_y,
         local_x 	=> this_local_x,
         --AR Channel
-        AR_ID 		=> mst1_ar_id,
-        AR_ADDR 	=> mst1_ar_addr,
-        AR_LEN 		=> mst1_ar_len,
-        AR_SIZE 	=> mst1_ar_size,
-        AR_BURST 	=> mst1_ar_burst,
-        AR_LOCK 	=> mst1_ar_lock,
-        AR_PROT 	=> mst1_ar_prot,
-        AR_VALID 	=> mst1_ar_valid,
-        AR_READY 	=> mst1_ar_ready,
+        AR_ID 		=> mst1_out.ar.id(1 downto 0),
+        AR_ADDR 	=> mst1_out.ar.addr,
+        AR_LEN 		=> mst1_out.ar.len,
+        AR_SIZE 	=> mst1_out.ar.size,
+        AR_BURST 	=> mst1_out.ar.burst,
+        AR_LOCK 	=> mst1_out.ar.lock,
+        AR_PROT 	=> mst1_out.ar.prot,
+        AR_VALID 	=> mst1_out.ar.valid,
+        AR_READY 	=> mst1_in.ar.ready,
         --R Channel
-        R_ID 		=> mst1_r_id,
-        R_DATA 		=> mst1_r_data,
-        R_RESP 		=> mst1_r_resp,
-        R_LAST 		=> mst1_r_last,
-        R_VALID 	=> mst1_r_valid,
-        R_READY 	=> mst1_r_ready,
+        R_ID 		=> mst1_in.r.id(1 downto 0),
+        R_DATA 		=> mst1_in.r.data,
+        R_RESP 		=> mst1_in.r.resp,
+        R_LAST 		=> mst1_in.r.last,
+        R_VALID 	=> mst1_in.r.valid,
+        R_READY 	=> mst1_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst1_aw_id,
-        AW_ADDR 	=> mst1_aw_addr,
-        AW_LEN 		=> mst1_aw_len,
-        AW_SIZE 	=> mst1_aw_size,
-        AW_BURST 	=> mst1_aw_burst,
-        AW_LOCK 	=> mst1_aw_lock,
-        AW_PROT 	=> mst1_aw_prot,
-        AW_VALID 	=> mst1_aw_valid,
-        AW_READY 	=> mst1_aw_ready,
+        AW_ID 		=> mst1_out.aw.id(1 downto 0),
+        AW_ADDR 	=> mst1_out.aw.addr,
+        AW_LEN 		=> mst1_out.aw.len,
+        AW_SIZE 	=> mst1_out.aw.size,
+        AW_BURST 	=> mst1_out.aw.burst,
+        AW_LOCK 	=> mst1_out.aw.lock,
+        AW_PROT 	=> mst1_out.aw.prot,
+        AW_VALID 	=> mst1_out.aw.valid,
+        AW_READY 	=> mst1_in.aw.ready,
         --W Channel
-        W_DATA 		=> mst1_w_data,
-        W_STRB 		=> mst1_w_strb,
-        W_LAST 		=> mst1_w_last,
-        W_VALID 	=> mst1_w_valid,
-        W_READY 	=> mst1_w_ready,
+        W_DATA 		=> mst1_out.w.data,
+        W_STRB 		=> mst1_out.w.strb,
+        W_LAST 		=> mst1_out.w.last,
+        W_VALID 	=> mst1_out.w.valid,
+        W_READY 	=> mst1_in.w.ready,
         --B Channel
-        B_ID 		=> mst1_b_id,
-        B_RESP 		=> mst1_b_resp,
-        B_VALID 	=> mst1_b_valid,
-        B_READY 	=> mst1_b_ready,
+        B_ID 		=> mst1_in.b.id(1 downto 0),
+        B_RESP 		=> mst1_in.b.resp,
+        B_VALID 	=> mst1_in.b.valid,
+        B_READY 	=> mst1_out.b.ready,
         --NoC
         coherence_req_rdreq 		=> remote_ahbm_rcv_rdreq,
         coherence_req_data_out 		=> remote_ahbm_rcv_data_out,
@@ -1128,33 +888,8 @@ begin
         );
 
 	  -- Tie off mst2 signals (only 2 masters are used)
-      mst2_aw_id 	<= "10";
-      mst2_aw_addr 	<= (others => '0');
-      mst2_aw_len 	<= (others => '0');
-      mst2_aw_size 	<= (others => '0');
-      mst2_aw_burst <= (others => '0');	
-      mst2_aw_lock 	<= '0';
-      mst2_aw_prot 	<= (others => '0');
-      mst2_aw_valid	<= '0';
-
-      mst2_w_data 	<= (others => '0');
-      mst2_w_strb 	<= (others => '0');
-      mst2_w_last 	<= '0';
-      mst2_w_valid 	<= '0';
-	
-      mst2_b_ready 	<= '0';
-
-      mst2_ar_id	<= "10";
-      mst2_ar_addr 	<= (others => '0');
-      mst2_ar_len 	<= (others => '0');
-      mst2_ar_size 	<= (others => '0');
-      mst2_ar_burst <= (others => '0');	
-      mst2_ar_lock 	<= '0';
-      mst2_ar_prot 	<= (others => '0');
-      mst2_ar_valid <= '0';
-	
-      mst2_r_ready 	<= '0';
-
+      mst2_out <= axi_mosi_none;
+      mst2_in  <= axi_somi_none;
   end generate no_cache_coherence;
 
   with_cache_coherence : if CFG_LLC_ENABLE /= 0 generate
@@ -1178,43 +913,43 @@ begin
         local_y 	=> this_local_y,
         local_x 	=> this_local_x,
         --AR Channel
-        AR_ID 		=> mst0_ar_id,
-        AR_ADDR 	=> mst0_ar_addr,
-        AR_LEN 		=> mst0_ar_len,
-        AR_SIZE 	=> mst0_ar_size,
-        AR_BURST 	=> mst0_ar_burst,
-        AR_LOCK 	=> mst0_ar_lock,
-        AR_PROT 	=> mst0_ar_prot,
-        AR_VALID 	=> mst0_ar_valid,
-        AR_READY 	=> mst0_ar_ready,
+        AR_ID 		=> mst0_out.ar.id,
+        AR_ADDR 	=> mst0_out.ar.addr,
+        AR_LEN 		=> mst0_out.ar.len,
+        AR_SIZE 	=> mst0_out.ar.size,
+        AR_BURST 	=> mst0_out.ar.burst,
+        AR_LOCK 	=> mst0_out.ar.lock,
+        AR_PROT 	=> mst0_out.ar.prot,
+        AR_VALID 	=> mst0_out.ar.valid,
+        AR_READY 	=> mst0_in.ar.ready,
         --R Channel
-        R_ID    	=> mst0_r_id,
-        R_DATA  	=> mst0_r_data,
-        R_RESP  	=> mst0_r_resp,
-        R_LAST  	=> mst0_r_last,
-        R_VALID 	=> mst0_r_valid,
-        R_READY 	=> mst0_r_ready,
+        R_ID    	=> mst0_in.r.id,
+        R_DATA  	=> mst0_in.r.data,
+        R_RESP  	=> mst0_in.r.resp,
+        R_LAST  	=> mst0_in.r.last,
+        R_VALID 	=> mst0_in.r.valid,
+        R_READY 	=> mst0_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst0_aw_id,
-        AW_ADDR 	=> mst0_aw_addr,
-        AW_LEN 		=> mst0_aw_len,
-        AW_SIZE 	=> mst0_aw_size,
-        AW_BURST 	=> mst0_aw_burst,
-        AW_LOCK 	=> mst0_aw_lock,
-        AW_PROT 	=> mst0_aw_prot,
-        AW_VALID 	=> mst0_aw_valid,
-        AW_READY 	=> mst0_aw_ready,
+        AW_ID 		=> mst0_out.aw.id,
+        AW_ADDR 	=> mst0_out.aw.addr,
+        AW_LEN 		=> mst0_out.aw.len,
+        AW_SIZE 	=> mst0_out.aw.size,
+        AW_BURST 	=> mst0_out.aw.burst,
+        AW_LOCK 	=> mst0_out.aw.lock,
+        AW_PROT 	=> mst0_out.aw.prot,
+        AW_VALID 	=> mst0_out.aw.valid,
+        AW_READY 	=> mst0_in.aw.ready,
         --W Channel
-        W_DATA 		=> mst0_w_data,
-        W_STRB 		=> mst0_w_strb,
-        W_LAST 		=> mst0_w_last,
-        W_VALID 	=> mst0_w_valid,
-        W_READY 	=> mst0_w_ready,
+        W_DATA 		=> mst0_out.w.data,
+        W_STRB 		=> mst0_out.w.strb,
+        W_LAST 		=> mst0_out.w.last,
+        W_VALID 	=> mst0_out.w.valid,
+        W_READY 	=> mst0_in.w.ready,
         --B Channel
-        B_ID 		=> mst0_b_id,
-        B_RESP 		=> mst0_b_resp,
-        B_VALID 	=> mst0_b_valid,
-        B_READY 	=> mst0_b_ready,
+        B_ID 		=> mst0_in.b.id,
+        B_RESP 		=> mst0_in.b.resp,
+        B_VALID 	=> mst0_in.b.valid,
+        B_READY 	=> mst0_out.b.ready,
         --NoC
         coherence_req_rdreq       => open,
         coherence_req_data_out    => (others => '0'),
@@ -1268,43 +1003,43 @@ begin
         local_x       => this_local_x,
         pconfig       => this_llc_pconfig,
         --AR Channel
-        AR_ID 		=> mst2_ar_id,
-        AR_ADDR 	=> mst2_ar_addr,
-        AR_LEN 		=> mst2_ar_len,
-        AR_SIZE 	=> mst2_ar_size,
-        AR_BURST 	=> mst2_ar_burst,
-        AR_LOCK 	=> mst2_ar_lock,
-        AR_PROT 	=> mst2_ar_prot,
-        AR_VALID 	=> mst2_ar_valid,
-        AR_READY 	=> mst2_ar_ready,
+        AR_ID 		=> mst2_out.ar.id,
+        AR_ADDR 	=> mst2_out.ar.addr,
+        AR_LEN 		=> mst2_out.ar.len,
+        AR_SIZE 	=> mst2_out.ar.size,
+        AR_BURST 	=> mst2_out.ar.burst,
+        AR_LOCK 	=> mst2_out.ar.lock,
+        AR_PROT 	=> mst2_out.ar.prot,
+        AR_VALID 	=> mst2_out.ar.valid,
+        AR_READY 	=> mst2_in.ar.ready,
         --R Channel
-        R_ID 		=> mst2_r_id,
-        R_DATA 		=> mst2_r_data,
-        R_RESP 		=> mst2_r_resp,
-        R_LAST 		=> mst2_r_last,
-        R_VALID 	=> mst2_r_valid,
-        R_READY 	=> mst2_r_ready,
+        R_ID 		=> mst2_in.r.id,
+        R_DATA 		=> mst2_in.r.data,
+        R_RESP 		=> mst2_in.r.resp,
+        R_LAST 		=> mst2_in.r.last,
+        R_VALID 	=> mst2_in.r.valid,
+        R_READY 	=> mst2_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst2_aw_id,
-        AW_ADDR 	=> mst2_aw_addr,
-        AW_LEN 		=> mst2_aw_len,
-        AW_SIZE 	=> mst2_aw_size,
-        AW_BURST 	=> mst2_aw_burst,
-        AW_LOCK 	=> mst2_aw_lock,
-        AW_PROT 	=> mst2_aw_prot,
-        AW_VALID 	=> mst2_aw_valid,
-        AW_READY 	=> mst2_aw_ready,
+        AW_ID 		=> mst2_out.aw.id,
+        AW_ADDR 	=> mst2_out.aw.addr,
+        AW_LEN 		=> mst2_out.aw.len,
+        AW_SIZE 	=> mst2_out.aw.size,
+        AW_BURST 	=> mst2_out.aw.burst,
+        AW_LOCK 	=> mst2_out.aw.lock,
+        AW_PROT 	=> mst2_out.aw.prot,
+        AW_VALID 	=> mst2_out.aw.valid,
+        AW_READY 	=> mst2_in.aw.ready,
         --W Channel
-        W_DATA 		=> mst2_w_data,
-        W_STRB 		=> mst2_w_strb,
-        W_LAST 		=> mst2_w_last,
-        W_VALID 	=> mst2_w_valid,
-        W_READY 	=> mst2_w_ready,
+        W_DATA 		=> mst2_out.w.data,
+        W_STRB 		=> mst2_out.w.strb,
+        W_LAST 		=> mst2_out.w.last,
+        W_VALID 	=> mst2_out.w.valid,
+        W_READY 	=> mst2_in.w.ready,
         --B Channel
-        B_ID 		=> mst2_b_id,
-        B_RESP 		=> mst2_b_resp,
-        B_VALID 	=> mst2_b_valid,
-        B_READY 	=> mst2_b_ready,
+        B_ID 		=> mst2_in.b.id,
+        B_RESP 		=> mst2_in.b.resp,
+        B_VALID 	=> mst2_in.b.valid,
+        B_READY 	=> mst2_out.b.ready,
 
         apbi                       => apbi,
         apbo                       => apbo(1),
@@ -1410,43 +1145,43 @@ begin
         local_y 	=> this_local_y,
         local_x 	=> this_local_x,
         --AR Channel
-        AR_ID 		=> mst1_ar_id,
-        AR_ADDR 	=> mst1_ar_addr,
-        AR_LEN 		=> mst1_ar_len,
-        AR_SIZE 	=> mst1_ar_size,
-        AR_BURST 	=> mst1_ar_burst,
-        AR_LOCK 	=> mst1_ar_lock,
-        AR_PROT 	=> mst1_ar_prot,
-        AR_VALID 	=> mst1_ar_valid,
-        AR_READY 	=> mst1_ar_ready,
+        AR_ID 		=> mst1_out.ar.id,
+        AR_ADDR 	=> mst1_out.ar.addr,
+        AR_LEN 		=> mst1_out.ar.len,
+        AR_SIZE 	=> mst1_out.ar.size,
+        AR_BURST 	=> mst1_out.ar.burst,
+        AR_LOCK 	=> mst1_out.ar.lock,
+        AR_PROT 	=> mst1_out.ar.prot,
+        AR_VALID 	=> mst1_out.ar.valid,
+        AR_READY 	=> mst1_in.ar.ready,
         --R Channel
-        R_ID 		=> mst1_r_id,
-        R_DATA 		=> mst1_r_data,
-        R_RESP 		=> mst1_r_resp,
-        R_LAST 		=> mst1_r_last,
-        R_VALID 	=> mst1_r_valid,
-        R_READY 	=> mst1_r_ready,
+        R_ID 		=> mst1_in.r.id,
+        R_DATA 		=> mst1_in.r.data,
+        R_RESP 		=> mst1_in.r.resp,
+        R_LAST 		=> mst1_in.r.last,
+        R_VALID 	=> mst1_in.r.valid,
+        R_READY 	=> mst1_out.r.ready,
         --AW Channel
-        AW_ID 		=> mst1_aw_id,
-        AW_ADDR 	=> mst1_aw_addr,
-        AW_LEN 		=> mst1_aw_len,
-        AW_SIZE 	=> mst1_aw_size,
-        AW_BURST 	=> mst1_aw_burst,
-        AW_LOCK 	=> mst1_aw_lock,
-        AW_PROT 	=> mst1_aw_prot,
-        AW_VALID 	=> mst1_aw_valid,
-        AW_READY 	=> mst1_aw_ready,
+        AW_ID 		=> mst1_out.aw.id,
+        AW_ADDR 	=> mst1_out.aw.addr,
+        AW_LEN 		=> mst1_out.aw.len,
+        AW_SIZE 	=> mst1_out.aw.size,
+        AW_BURST 	=> mst1_out.aw.burst,
+        AW_LOCK 	=> mst1_out.aw.lock,
+        AW_PROT 	=> mst1_out.aw.prot,
+        AW_VALID 	=> mst1_out.aw.valid,
+        AW_READY 	=> mst1_in.aw.ready,
         --W Channel
-        W_DATA 		=> mst1_w_data,
-        W_STRB 		=> mst1_w_strb,
-        W_LAST 		=> mst1_w_last,
-        W_VALID 	=> mst1_w_valid,
-        W_READY 	=> mst1_w_ready,
+        W_DATA 		=> mst1_out.w.data,
+        W_STRB 		=> mst1_out.w.strb,
+        W_LAST 		=> mst1_out.w.last,
+        W_VALID 	=> mst1_out.w.valid,
+        W_READY 	=> mst1_in.w.ready,
         --B Channel
-        B_ID 		=> mst1_b_id,
-        B_RESP 		=> mst1_b_resp,
-        B_VALID 	=> mst1_b_valid,
-        B_READY 	=> mst1_b_ready,
+        B_ID 		=> mst1_in.b.id,
+        B_RESP 		=> mst1_in.b.resp,
+        B_VALID 	=> mst1_in.b.valid,
+        B_READY 	=> mst1_out.b.ready,
         --NoC
         coherence_req_rdreq 		=> remote_ahbm_rcv_rdreq,
         coherence_req_data_out 		=> remote_ahbm_rcv_data_out,

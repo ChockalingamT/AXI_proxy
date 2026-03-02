@@ -56,8 +56,6 @@ entity asic_tile_mem is
     fpga_clk_out       : out std_ulogic;
     fpga_credit_in     : in  std_ulogic;
     fpga_credit_out    : out std_ulogic;
-    ddr_axi_si         : out   axi_mosi_type;
-    ddr_axi_so         : in    axi_somi_type;
     -- Test interface
     tdi                : in  std_logic;
     tdo                : out std_logic;
@@ -286,8 +284,8 @@ begin
       dco_clk_sel         => dco_clk_sel,
       dco_en              => dco_en,
       dco_clk_delay_sel   => dco_clk_delay_sel,
-      ddr_axi_si          => ddr_axi_si,
-      ddr_axi_so          => ddr_axi_so,
+      ddr_axi_si          => open,
+      ddr_axi_so          => axi_somi_none,
 	  fpga_data_in        => fpga_data_in,
       fpga_data_out       => fpga_data_out,
       fpga_oen            => fpga_oen,

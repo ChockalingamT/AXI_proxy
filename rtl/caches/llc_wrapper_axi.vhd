@@ -1100,7 +1100,7 @@ begin  -- architecture rtl
 
   end process fsm_ext;
 
-  -- Do not use AHB master interface
+  -- Do not use AXI master interface
     AR_ADDR  <= (others => '0');
     AR_PROT  <= (others => '0');
     AR_VALID <= '0';

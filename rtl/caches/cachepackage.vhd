@@ -424,43 +424,39 @@ package cachepackage is
       local_x : in local_yx;
       pconfig : in apb_config_type;
 
-	AR_ID    : out std_logic_vector(					1 downto 0);
-	AR_ADDR  : out std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-	AR_LEN   : out std_logic_vector(					7 downto 0);
-	AR_SIZE  : out std_logic_vector(					2 downto 0);
-	AR_BURST : out std_logic_vector(					1 downto 0);
-	AR_LOCK  : out std_ulogic;
-	AR_PROT  : out std_logic_vector(					2 downto 0);
-	AR_VALID : out std_ulogic;
-	AR_READY : in  std_ulogic;
-
-	R_ID     : in  std_logic_vector(					1 downto 0); 
-	R_DATA   : in  std_logic_vector(			  AXIDW-1 downto 0);
-	R_RESP   : in  std_logic_vector(					1 downto 0);
-	R_LAST   : in  std_ulogic;
-	R_VALID  : in  std_ulogic;
-	R_READY  : out std_ulogic;
-
-	AW_ID    : out std_logic_vector(					1 downto 0);
-	AW_ADDR  : out std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
-	AW_LEN   : out std_logic_vector(					7 downto 0);
-	AW_SIZE  : out std_logic_vector(					2 downto 0);
-	AW_BURST : out std_logic_vector(					1 downto 0);
-	AW_LOCK  : out std_ulogic;
-	AW_PROT  : out std_logic_vector(					2 downto 0);
-	AW_VALID : out std_ulogic;
-	AW_READY : in  std_ulogic;
-
-	W_DATA   : out std_logic_vector(			  AXIDW-1 downto 0);
-	W_STRB   : out std_logic_vector(				 AW-1 downto 0);
-	W_LAST   : out std_ulogic;
-	W_VALID  : out std_ulogic;
-	W_READY  : in  std_ulogic;
-
-	B_ID     : in  std_logic_vector(					1 downto 0);
-	B_RESP   : in  std_logic_vector(					1 downto 0);
-	B_VALID  : in  std_ulogic;
-	B_READY  : out std_ulogic;	
+	  AR_ID    : out std_logic_vector(					1 downto 0);
+	  AR_ADDR  : out std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+	  AR_LEN   : out std_logic_vector(					7 downto 0);
+	  AR_SIZE  : out std_logic_vector(					2 downto 0);
+	  AR_BURST : out std_logic_vector(					1 downto 0);
+	  AR_LOCK  : out std_ulogic;
+	  AR_PROT  : out std_logic_vector(					2 downto 0);
+	  AR_VALID : out std_ulogic;
+	  AR_READY : in  std_ulogic;
+	  R_ID     : in  std_logic_vector(					1 downto 0);
+	  R_DATA   : in  std_logic_vector(			  AXIDW-1 downto 0);
+	  R_RESP   : in  std_logic_vector(					1 downto 0);
+	  R_LAST   : in  std_ulogic;
+	  R_VALID  : in  std_ulogic;
+	  R_READY  : out std_ulogic;
+	  AW_ID    : out std_logic_vector(					1 downto 0);
+	  AW_ADDR  : out std_logic_vector(GLOB_PHYS_ADDR_BITS-1 downto 0);
+	  AW_LEN   : out std_logic_vector(					7 downto 0);
+	  AW_SIZE  : out std_logic_vector(					2 downto 0);
+	  AW_BURST : out std_logic_vector(					1 downto 0);
+	  AW_LOCK  : out std_ulogic;
+	  AW_PROT  : out std_logic_vector(					2 downto 0);
+	  AW_VALID : out std_ulogic;
+	  AW_READY : in  std_ulogic;
+	  W_DATA   : out std_logic_vector(			  AXIDW-1 downto 0);
+	  W_STRB   : out std_logic_vector(				 AW-1 downto 0);
+	  W_LAST   : out std_ulogic;
+	  W_VALID  : out std_ulogic;
+	  W_READY  : in  std_ulogic;
+	  B_ID     : in  std_logic_vector(					1 downto 0);
+	  B_RESP   : in  std_logic_vector(					1 downto 0);
+	  B_VALID  : in  std_ulogic;
+	  B_READY  : out std_ulogic;
 
       apbi  : in  apb_slv_in_type;
       apbo  : out apb_slv_out_type;

@@ -102,19 +102,6 @@ component sgmii_vc707
   );
 end component;
 
-component edcl_ahbmst_emu is
-  generic (
-    hindex     : integer := 0
-  );
-  port (
-    clk    :  in  std_ulogic;
-    reset  :  in  std_ulogic;
-    ahbmo  :  out ahb_mst_out_type;
-    ahbmi  :  in  ahb_mst_in_type;
-    edcl_oen_ctrl  : out std_logic
-  );
-end component edcl_ahbmst_emu;
-
 function fix_endian (
 le : std_logic_vector((MEM_AXIDW/8) - 1 downto 0))
 return std_logic_vector is
