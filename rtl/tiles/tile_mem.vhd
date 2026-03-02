@@ -241,7 +241,6 @@ architecture rtl of tile_mem is
   signal mst2_in   : axi_somi_type;
   signal rom_out   : axi_mosi_type;
   signal rom_in    : axi_somi_type;
-  signal ddr_write : std_ulogic;
   signal ddr_axi_si_temp   : axi_mosi_type;
 
   signal dram_aw_qos      : std_logic_vector(3 downto 0);
@@ -264,7 +263,7 @@ architecture rtl of tile_mem is
     0      => '1',  -- memory
     others => '0');
 
-  attribute keep              : string;
+  attribute keep       : string;
   attribute mark_debug : string;
   attribute mark_debug of remote_ahbm_rcv_rdreq  : signal is "true";
   attribute mark_debug of remote_ahbm_rcv_data_out : signal is "true";

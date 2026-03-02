@@ -1396,7 +1396,7 @@ begin
 
           if ((ddr_axi_si(i).aw.addr(31 downto 20) xor conv_std_logic_vector(ddr_haddr(i), 12))
               and conv_std_logic_vector(ddr_hmask(i), 12)) = zero32(31 downto 20) then
-            if ddr_axi_si(i).w.valid = '1' then
+            if ddr_axi_si(i).w.valid = '1' and ddr_axi_so(i).w.ready = '1' then
               mon_ddr(i).word_transfer <= '1';
             end if;
           end if;

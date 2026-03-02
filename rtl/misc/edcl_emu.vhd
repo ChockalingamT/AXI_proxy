@@ -262,177 +262,52 @@ begin
     -- send program binary
     ---------------------------------------------------------------------------
 
-   -- report "loading binary"  severity note;
-   --
-   -- addr <= default_ddr_addr; --X"80000000";  --DRAM base_addr for leon3
-   -- word <= default_word;
-   --
-   -- readline(program, text_word);
-   -- hread(text_word, word_var, ok);
-   -- word <= ahbrd(word_var);
-   --
-   -- ahbmo.hbusreq <= '1';
-   --
-   -- wait until rising_edge(clk) and ahbmi.hready = '1';
-   -- ahbmo.haddr <= addr;
-   -- ahbmo.hwrite <= '1';
-   -- ahbmo.hsize <= "010";
-   -- ahbmo.htrans <= "10";
-   -- ahbmo.hburst <= "001";
-   -- ahbmo.hwdata <= word;
-   --
-   -- ad_next := std_logic_vector(unsigned (addr + 4));
-   --
-   -- wait until rising_edge(clk);
-   -- ahbmo.haddr <= ad_next;
-   -- ahbmo.htrans <= "11";
-   --
-   -- ad_next := std_logic_vector(unsigned (ad_next + 4));
-   --
-   -- -- send data
-   -- while not endfile(program) loop
-   --   readline(program, text_word);
-   --   hread(text_word, word_var, ok);
-   --   addr <= ad_next;
-   --   ad_next := std_logic_vector(unsigned (ad_next + 4));
-   --   word <= ahbrd(word_var);
-   --   wait until rising_edge(clk) and ahbmi.hready = '1';
-   --   ahbmo.htrans <= "11";
-   --   ahbmo.hwdata <= word;
-   --   ahbmo.haddr <= addr;
-   -- end loop;
-   --
-   -- --  wait until rising_edge(clk);
-   --   ahbmo.htrans <= "00";
-   --   ahbmo.hburst <= "000";
-   --
-   --   report "loaded program"  severity note;
-   -- wait for 500 ns;
-
-
-  --***********************************************************************
-  -- Add this constant definition at the top of the architecture or process
-
-  -- ... (rest of your process/architecture) ...
-
-      report "loading binary"  severity note;
-
-      addr <= default_ddr_addr; -- Initialize addr signal
-      word <= default_word;
-
-      -- First burst
-      ahbmo.hbusreq <= '1'; -- Assert bus request for the first burst
-
-      -- Read the first word for the first burst
-      readline(program, text_word);
-      hread(text_word, word_var, ok);
-      word <= ahbrd(word_var);
-
-      -- First transfer of the first burst (NONSEQ)
-      wait until rising_edge(clk) and ahbmi.hready = '1';
-      ahbmo.haddr <= addr; -- Send initial address
-      ahbmo.hwrite <= '1';
-      ahbmo.hsize <= "010"; -- 4 bytes
-      ahbmo.htrans <= "10"; -- HTRANS_NONSEQ
-      ahbmo.hburst <= "001"; -- HBURST_INCR
-      ahbmo.hwdata <= word;
-
-      --addr <= std_logic_vector(unsigned (addr + 4)); -- Update addr for the next 
-	  ad_next := std_logic_vector(unsigned (addr + 4));  
-      
-	  wait until rising_edge(clk);
-      ahbmo.haddr <= ad_next;
-      ahbmo.htrans <= "11";
+   report "loading binary"  severity note;
    
-      ad_next := std_logic_vector(unsigned (ad_next + 4));
-
-      -- Loop for the rest of the first burst
-      FIRST_BURST_LOOP:
-      while not endfile(program) loop
-        -- Check if the *next* address to be sent is the break address
-        if addr = BREAK_ADDR_VAL then
-          -- This means the current transfer (which just completed) was the last  of the first burst.
-          -- We need to end the burst now.
-
-          exit FIRST_BURST_LOOP;
-        end if;
-
-        -- Read the next word
-        readline(program, text_word);
-        hread(text_word, word_var, ok);
-        word <= ahbrd(word_var);
-        addr <= ad_next;
-        ad_next := std_logic_vector(unsigned (ad_next + 4));
-
-        wait until rising_edge(clk) and ahbmi.hready = '1';
-        ahbmo.htrans <= "11"; -- HTRANS_SEQ
-        ahbmo.hwdata <= word;
-        ahbmo.haddr <= addr; -- Send current address
-
-        --addr <= std_logic_vector(unsigned (addr + 4)); -- Update addr for the next transfer
-      end loop FIRST_BURST_LOOP;
-
-      -- End of first burst
-      wait until rising_edge(clk); -- Wait for the last transfer of the first  burst to complete
-      ahbmo.htrans <= "00"; -- HTRANS_IDLE
-      ahbmo.hburst <= "000"; -- HBURST_SINGLE
-      ahbmo.hbusreq <= '0'; -- De-assert bus request
-
-      -- If the file ended before the break address, or if we just broke out
-
-      -- Start of the second burst
-
-      -- Read the first word for the second burst (which is at BREAK_ADDR_VAL)
-      readline(program, text_word);
-      hread(text_word, word_var, ok);
-      word <= ahbrd(word_var);
-
-      ahbmo.hbusreq <= '1'; -- Re-assert bus request for the second burst
-
-
-     -- First transfer of the second burst (NONSEQ)
-      wait until rising_edge(clk) and ahbmi.hready = '1';
-      ahbmo.haddr <= addr; -- This should be BREAK_ADDR_VAL
-      ahbmo.hwrite <= '1';
-      ahbmo.hsize <= "010"; -- 4 bytes
-      ahbmo.htrans <= "10"; -- HTRANS_NONSEQ
-      ahbmo.hburst <= "001"; -- HBURST_INCR
-      ahbmo.hwdata <= word;
-
-      --addr <= std_logic_vector(unsigned (addr + 4)); -- Update addr for the next transfer
-      ad_next := std_logic_vector(unsigned (addr + 4));
-
-      wait until rising_edge(clk);
-      ahbmo.haddr <= ad_next;
-      ahbmo.htrans <= "11";
-
-      ad_next := std_logic_vector(unsigned (ad_next + 4));
-
-      -- Loop for the rest of the second burst
-      SECOND_BURST_LOOP:
-      while not endfile(program) loop
-        readline(program, text_word);
-        hread(text_word, word_var, ok);
-        word <= ahbrd(word_var);
-        addr <= ad_next;
-        ad_next := std_logic_vector(unsigned (ad_next + 4));
-
-        wait until rising_edge(clk) and ahbmi.hready = '1';
-        ahbmo.htrans <= "11"; -- HTRANS_SEQ
-        ahbmo.hwdata <= word;
-        ahbmo.haddr <= addr; -- Send current address
-
-        addr <= std_logic_vector(unsigned (addr + 4)); -- Update addr for the next transfer
-      end loop SECOND_BURST_LOOP;
-
-      -- End of second burst
-      wait until rising_edge(clk);
-      ahbmo.htrans <= "00"; -- HTRANS_IDLE
-      ahbmo.hburst <= "000"; -- HBURST_SINGLE
-      ahbmo.hbusreq <= '0'; -- De-assert bus request
-
-      report "loaded program"  severity note;
-      wait for 500 ns;
+   addr <= default_ddr_addr; --X"80000000";  --DRAM base_addr for leon3
+   word <= default_word;
+   
+   readline(program, text_word);
+   hread(text_word, word_var, ok);
+   word <= ahbrd(word_var);
+   
+   ahbmo.hbusreq <= '1';
+   
+   wait until rising_edge(clk) and ahbmi.hready = '1';
+   ahbmo.haddr <= addr;
+   ahbmo.hwrite <= '1';
+   ahbmo.hsize <= "010";
+   ahbmo.htrans <= "10";
+   ahbmo.hburst <= "001";
+   ahbmo.hwdata <= word;
+   
+   ad_next := std_logic_vector(unsigned (addr + 4));
+   
+   wait until rising_edge(clk);
+   ahbmo.haddr <= ad_next;
+   ahbmo.htrans <= "11";
+   
+   ad_next := std_logic_vector(unsigned (ad_next + 4));
+   
+   -- send data
+   while not endfile(program) loop
+     readline(program, text_word);
+     hread(text_word, word_var, ok);
+     addr <= ad_next;
+     ad_next := std_logic_vector(unsigned (ad_next + 4));
+     word <= ahbrd(word_var);
+     wait until rising_edge(clk) and ahbmi.hready = '1';
+     ahbmo.htrans <= "11";
+     ahbmo.hwdata <= word;
+     ahbmo.haddr <= addr;
+   end loop;
+   
+   --  wait until rising_edge(clk);
+     ahbmo.htrans <= "00";
+     ahbmo.hburst <= "000";
+   
+     report "loaded program"  severity note;
+   wait for 500 ns;
 
     ---------------------------------------------------------------------------
     -- send  2 soft resets

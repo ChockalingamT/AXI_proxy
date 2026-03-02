@@ -533,9 +533,9 @@ begin
     generic map (
       SIMULATION => SIMULATION)
     port map (
-      rst           => chip_rst,
-      sys_clk       => sys_clk(0 to MEM_ID_RANGE_MSB),
-      refclk        => chip_refclk,
+      rst            => chip_rst,
+      sys_clk        => sys_clk(0 to MEM_ID_RANGE_MSB),
+      refclk         => chip_refclk,
       uart_rxd       => uart_rxd_int,
       uart_txd       => uart_txd_int,
       uart_ctsn      => uart_ctsn_int,
@@ -543,15 +543,15 @@ begin
       cpuerr         => cpuerr,
       ddr_axi_si     => ddr_axi_si(0 to MEM_ID_RANGE_MSB),
       ddr_axi_so     => ddr_axi_so(0 to MEM_ID_RANGE_MSB),
-      eth0_ahbmi        => eth0_ahbmi,
-      eth0_ahbmo        => eth0_ahbmo,
-      edcl_ahbmo        => edcl_ahbmo,
-      eth0_apbi         => eth0_apbi,
-      eth0_apbo         => eth0_apbo,
-      sgmii0_apbi       => sgmii0_apbi,
-      sgmii0_apbo       => sgmii0_apbo,
-      dvi_apbi          => dvi_apbi,
-      dvi_apbo          => dvi_apbo,
-      dvi_ahbmi         => dvi_ahbmi,
-      dvi_ahbmo         => dvi_ahbmo);
+      eth0_ahbmi     => eth0_ahbmi,
+      eth0_ahbmo     => eth0_ahbmo,
+      edcl_ahbmo     => edcl_ahbmo,
+      eth0_apbi      => eth0_apbi,
+      eth0_apbo      => eth0_apbo,
+      sgmii0_apbi    => sgmii0_apbi,
+      sgmii0_apbo    => sgmii0_apbo,
+      dvi_apbi       => dvi_apbi,
+      dvi_apbo       => dvi_apbo,
+      dvi_ahbmi      => dvi_ahbmi,
+      dvi_ahbmo      => dvi_ahbmo);
 end;

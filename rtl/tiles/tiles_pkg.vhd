@@ -22,15 +22,15 @@ package tiles_pkg is
       SIMULATION : boolean := false);
     port (
       rst                : in  std_logic;
-      sys_clk            : in    std_logic_vector(0 to MEM_ID_RANGE_MSB);
+      sys_clk            : in  std_logic_vector(0 to MEM_ID_RANGE_MSB);
       refclk             : in  std_logic;
       uart_rxd           : in  std_logic;
       uart_txd           : out std_logic;
       uart_ctsn          : in  std_logic;
       uart_rtsn          : out std_logic;
-      cpuerr             : out   std_logic;
-      ddr_axi_si         : out   axi_mosi_vector(0 to MEM_ID_RANGE_MSB);
-      ddr_axi_so         : in    axi_somi_vector(0 to MEM_ID_RANGE_MSB);
+      cpuerr             : out std_logic;
+      ddr_axi_si         : out axi_mosi_vector(0 to MEM_ID_RANGE_MSB);
+      ddr_axi_so         : in  axi_somi_vector(0 to MEM_ID_RANGE_MSB);
 	  eth0_apbi          : out apb_slv_in_type;
       eth0_apbo          : in  apb_slv_out_type;
       sgmii0_apbi        : out apb_slv_in_type;
