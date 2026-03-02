@@ -172,8 +172,8 @@ package tiles_asic_pkg is
       fpga_clk_out       : out   std_ulogic;
       fpga_credit_in     : in    std_ulogic;
       fpga_credit_out    : out   std_ulogic;
-      tdi                : in    std_logic;
-      tdo                : out   std_logic;
+      tdi		         : in    std_logic;
+      tdo		         : out   std_logic;
       tms                : in    std_logic;
       tclk               : in    std_logic;
       -- DCO config

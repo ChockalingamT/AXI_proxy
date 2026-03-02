@@ -135,7 +135,7 @@ begin
   uart_rxd  <= '0';
   uart_ctsn <= '0';
 
-  cpu : top
+  soc_inst : top
     generic map (
       SIMULATION      => SIMULATION)
     port map (

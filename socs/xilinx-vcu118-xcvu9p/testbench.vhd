@@ -180,7 +180,7 @@ begin
   button <= (others => '0');
   switch <= (others => '0');
 
-  cpu : top
+  soc_inst : top
     generic map (
       SIMULATION      => SIMULATION)
     port map (
