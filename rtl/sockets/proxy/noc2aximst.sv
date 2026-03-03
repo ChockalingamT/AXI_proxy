@@ -834,7 +834,7 @@ module noc2aximst
     assign AW_PROT  = cs.aw_prot;
     assign W_LAST   = w_last_comb;
     assign W_VALID  = w_valid_comb;
-    assign R_READY  = r_ready_comb  
+    assign R_READY  = r_ready_comb;  
     assign W_DATA   = w_data_comb;
     assign W_STRB   = w_strb_comb;
     assign B_READY  = 1'b1;
