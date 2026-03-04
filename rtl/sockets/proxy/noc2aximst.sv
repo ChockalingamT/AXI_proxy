@@ -27,7 +27,6 @@ module noc2aximst
     input logic                               ACLK,
     input logic  [       GLOB_YX_WIDTH-1 : 0] local_y,
     input logic  [       GLOB_YX_WIDTH-1 : 0] local_x,
-
     output logic [                     1 : 0] AR_ID,
     output logic [ GLOB_PHYS_ADDR_BITS-1 : 0] AR_ADDR,
     output logic [                     7 : 0] AR_LEN,
@@ -37,14 +36,12 @@ module noc2aximst
     output logic [                     2 : 0] AR_PROT,
     output logic                              AR_VALID,
     input  logic                              AR_READY,
-
     input  logic [                     1 : 0] R_ID,
     input  logic [               AXIDW-1 : 0] R_DATA,
     input  logic [                     1 : 0] R_RESP,       // not used
     input  logic                              R_LAST,
     input  logic                              R_VALID,
     output logic                              R_READY,
-
     output logic [                     1 : 0] AW_ID,
     output logic [ GLOB_PHYS_ADDR_BITS-1 : 0] AW_ADDR,
     output logic [                     7 : 0] AW_LEN,
@@ -54,18 +51,15 @@ module noc2aximst
     output logic [                     2 : 0] AW_PROT,
     output logic                              AW_VALID,
     input  logic                              AW_READY,
-
     output logic [               AXIDW-1 : 0] W_DATA,
     output logic [                  AW-1 : 0] W_STRB,
     output logic                              W_LAST,
     output logic                              W_VALID,
     input  logic                              W_READY,
-
     input  logic [                     1 : 0] B_ID, 
     input  logic [                     1 : 0] B_RESP,       // not used
     input  logic                              B_VALID,      // not used
     output logic                              B_READY,      
-
     output logic                              coherence_req_rdreq,
     input  logic [  this_coh_flit_size-1 : 0] coherence_req_data_out,
     input  logic                              coherence_req_empty,
@@ -729,7 +723,7 @@ module noc2aximst
     logic               w_last_comb;
     logic [AW-1:0]      w_strb_comb;
     logic               r_ready_comb;
-
+    
     logic [AXIDW-1:0]   dma_live_flit_swapped;
     logic [AXIDW-1:0]   dma_pref_flit_swapped;
 
@@ -748,7 +742,7 @@ module noc2aximst
 
         dma_payload_live = dma_rcv_data_out[DMA_NOC_WIDTH-1 : 0];
         dma_payload_pref = cs.dma_flit[DMA_NOC_WIDTH-1 : 0];
-        
+
         if (little_end == 0) begin
             dma_live_flit_swapped = dma_payload_live[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
             dma_pref_flit_swapped = dma_payload_pref[ARCH_BITS * cs.word_cnt +: ARCH_BITS];
